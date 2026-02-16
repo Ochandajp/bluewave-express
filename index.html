@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BlueWave Express Cargo - Shipping Solutions</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0f1e 0%, #1a1f2f 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+
+        /* Navbar */
+        .navbar {
+            background: rgba(18, 25, 40, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a3a5a;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo img {
+            width: 40px;
+            height: 40px;
+            filter: invert(1);
+        }
+
+        .logo h1 {
+            color: #4a9eff;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .logo span {
+            color: #fff;
+            font-size: 1rem;
+            display: block;
+            letter-spacing: 2px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-links a {
+            color: #b0b0b0;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s;
+            cursor: pointer;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #4a9eff;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-login {
+            background: transparent;
+            border: 2px solid #4a9eff;
+            color: #4a9eff;
+        }
+
+        .btn-login:hover {
+            background: #4a9eff;
+            color: #fff;
+        }
+
+        .btn-signup {
+            background: #4a9eff;
+            color: #fff;
+        }
+
+        .btn-signup:hover {
+            background: #2179e9;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(74, 158, 255, 0.3);
+        }
+
+        .btn-logout {
+            background: #ff4a4a;
+            color: #fff;
+            border: none;
+        }
+
+        .btn-logout:hover {
+            background: #e02121;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 100px 5% 40px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Hero Section */
+        .hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            align-items: center;
+            margin-bottom: 4rem;
+            background: linear-gradient(145deg, #1a2335 0%, #0f1a2f 100%);
+            padding: 3rem;
+            border-radius: 20px;
+            border: 1px solid #2a3a5a;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .hero-content h2 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #fff 0%, #4a9eff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-content p {
+            color: #b0b0b0;
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .hero-image img {
+            width: 100%;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Tracking Section */
+        .tracking-section {
+            background: #1a2335;
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 4rem;
+            border: 1px solid #2a3a5a;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .section-title h3 {
+            font-size: 2.5rem;
+            color: #4a9eff;
+            margin-bottom: 1rem;
+        }
+
+        .tracking-form {
+            display: flex;
+            gap: 1rem;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+
+        .tracking-input {
+            flex: 1;
+            padding: 1rem;
+            background: #0f1a2f;
+            border: 2px solid #2a3a5a;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .tracking-input:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+
+        .btn-track {
+            padding: 1rem 2rem;
+            background: #4a9eff;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-track:hover {
+            background: #2179e9;
+            transform: scale(1.05);
+        }
+
+        /* Tracking Result */
+        .tracking-result {
+            background: #0f1a2f;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+            border: 1px solid #2a3a5a;
+            display: none;
+        }
+
+        .tracking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #2a3a5a;
+        }
+
+        .tracking-number {
+            font-size: 1.5rem;
+            color: #4a9eff;
+            font-weight: 700;
+        }
+
+        .tracking-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .status-pending { background: #ffa50020; color: #ffa500; }
+        .status-in-transit { background: #4a9eff20; color: #4a9eff; }
+        .status-out-for-delivery { background: #80008020; color: #a05eff; }
+        .status-delivered { background: #00ff0020; color: #00ff00; }
+
+        .tracking-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .detail-item {
+            background: #1a2335;
+            padding: 1rem;
+            border-radius: 10px;
+        }
+
+        .detail-label {
+            color: #808080;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .timeline {
+            margin-top: 2rem;
+        }
+
+        .timeline-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem;
+            border-left: 3px solid #2a3a5a;
+            margin-left: 1rem;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            width: 15px;
+            height: 15px;
+            background: #4a9eff;
+            border-radius: 50%;
+            position: absolute;
+            left: -9px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .timeline-item.completed::before {
+            background: #00ff00;
+        }
+
+        .timeline-item.current::before {
+            background: #4a9eff;
+            box-shadow: 0 0 20px #4a9eff;
+        }
+
+        /* Create Tracking Form (Protected) */
+        .create-tracking {
+            background: #1a2335;
+            border-radius: 20px;
+            padding: 2rem;
+            margin-top: 2rem;
+            display: none;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #808080;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.8rem;
+            background: #0f1a2f;
+            border: 2px solid #2a3a5a;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1rem;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #4a9eff;
+        }
+
+        .btn-create {
+            width: 100%;
+            padding: 1rem;
+            background: #4a9eff;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-create:hover {
+            background: #2179e9;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: #1a2335;
+            border-radius: 20px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid #2a3a5a;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #2a3a5a;
+        }
+
+        .modal-header h3 {
+            color: #4a9eff;
+            font-size: 1.8rem;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            color: #808080;
+            font-size: 2rem;
+            cursor: pointer;
+        }
+
+        .close-modal:hover {
+            color: #fff;
+        }
+
+        .switch-auth {
+            text-align: center;
+            margin-top: 1rem;
+            color: #808080;
+        }
+
+        .switch-auth a {
+            color: #4a9eff;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .switch-auth a:hover {
+            text-decoration: underline;
+        }
+
+        /* User Panel */
+        .user-panel {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .user-greeting {
+            background: linear-gradient(145deg, #1a2335 0%, #0f1a2f 100%);
+            padding: 1rem;
+            border-radius: 10px;
+            border: 1px solid #4a9eff;
+            margin-bottom: 2rem;
+        }
+
+        .tracking-list {
+            background: #0f1a2f;
+            border-radius: 10px;
+            padding: 1rem;
+        }
+
+        .tracking-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #2a3a5a;
+            cursor: pointer;
+        }
+
+        .tracking-item:hover {
+            background: #1a2335;
+        }
+
+        .tracking-item:last-child {
+            border-bottom: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .tracking-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 4px solid #2a3a5a;
+            border-top: 4px solid #4a9eff;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Alert */
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+
+        .alert-success {
+            background: #00ff0020;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+        }
+
+        .alert-error {
+            background: #ff000020;
+            border: 1px solid #ff0000;
+            color: #ff0000;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid #2a3a5a;
+            margin-top: 4rem;
+            color: #808080;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="logo">
+            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%234a9eff'%3E%3Cpath d='M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2v-5l-3-4zM6 18.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm13.5-9l1.96 2.5H17V9.5h2.5zm-1.5 9c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z'/%3E%3C/svg%3E" alt="Logo">
+            <div>
+                <h1>BlueWave</h1>
+                <span>Express Cargo</span>
+            </div>
+        </div>
+        <div class="nav-links">
+            <a class="active" onclick="showSection('home')">Home</a>
+            <a onclick="showSection('tracking')">Track Shipment</a>
+            <a onclick="showSection('create')" id="createLink" style="display: none;">Create Tracking</a>
+            <a onclick="showSection('myShipments')" id="myShipmentsLink" style="display: none;">My Shipments</a>
+        </div>
+        <div class="auth-buttons">
+            <div id="authButtons">
+                <button class="btn btn-login" onclick="showLoginModal()">Login</button>
+                <button class="btn btn-signup" onclick="showSignupModal()">Sign Up</button>
+            </div>
+            <div id="userMenu" style="display: none;">
+                <span id="userEmail" style="margin-right: 1rem; color: #4a9eff;"></span>
+                <button class="btn btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Alert -->
+        <div id="alert" class="alert"></div>
+
+        <!-- Home Section -->
+        <div id="homeSection" class="section active">
+            <div class="hero">
+                <div class="hero-content">
+                    <h2>Fast & Reliable Shipping Worldwide</h2>
+                    <p>Experience seamless shipping with BlueWave Express Cargo. Track your packages in real-time and enjoy peace of mind with our advanced tracking system.</p>
+                    <button class="btn btn-signup" onclick="showSignupModal()">Get Started</button>
+                </div>
+                <div class="hero-image">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='400' viewBox='0 0 600 400'%3E%3Crect width='600' height='400' fill='%231a2335'/%3E%3Ccircle cx='300' cy='200' r='150' fill='%232a3a5a'/%3E%3Cpath d='M250 150 L350 150 L400 250 L200 250 Z' fill='%234a9eff' opacity='0.8'/%3E%3Ctext x='200' y='220' fill='%23ffffff' font-family='Arial' font-size='24'%3EShipping%3C/text%3E%3C/svg%3E" alt="Shipping">
+                </div>
+            </div>
+
+            <div class="tracking-section">
+                <div class="section-title">
+                    <h3>Track Your Shipment</h3>
+                    <p>Enter your tracking number to get real-time updates</p>
+                </div>
+                <div class="tracking-form">
+                    <input type="text" class="tracking-input" id="trackingInput" placeholder="Enter tracking number (e.g., BWX12345678)">
+                    <button class="btn-track" onclick="trackShipment()">Track</button>
+                </div>
+                <div id="trackingResult" class="tracking-result"></div>
+            </div>
+        </div>
+
+        <!-- Tracking Section -->
+        <div id="trackingSection" class="section" style="display: none;">
+            <div class="tracking-section">
+                <div class="section-title">
+                    <h3>Track Your Shipment</h3>
+                    <p>Enter your tracking number to get real-time updates</p>
+                </div>
+                <div class="tracking-form">
+                    <input type="text" class="tracking-input" id="trackingInput2" placeholder="Enter tracking number (e.g., BWX12345678)">
+                    <button class="btn-track" onclick="trackShipment()">Track</button>
+                </div>
+                <div id="trackingResult2" class="tracking-result"></div>
+            </div>
+        </div>
+
+        <!-- Create Tracking Section (Protected) -->
+        <div id="createSection" class="section" style="display: none;">
+            <div class="create-tracking">
+                <div class="section-title">
+                    <h3>Create New Shipment</h3>
+                    <p>Generate a tracking number for your shipment</p>
+                </div>
+                <form id="createTrackingForm" onsubmit="createTracking(event)">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Sender Name</label>
+                            <input type="text" id="senderName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sender Address</label>
+                            <input type="text" id="senderAddress" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Receiver Name</label>
+                            <input type="text" id="receiverName" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Receiver Address</label>
+                            <input type="text" id="receiverAddress" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Weight (kg)</label>
+                            <input type="text" id="weight" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Dimensions (LxWxH cm)</label>
+                            <input type="text" id="dimensions" required>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-create">Generate Tracking Number</button>
+                </form>
+                <div id="newTrackingResult" style="margin-top: 2rem; padding: 1rem; background: #0f1a2f; border-radius: 10px; display: none;">
+                    <h4 style="color: #4a9eff; margin-bottom: 1rem;">Tracking Number Generated:</h4>
+                    <p id="newTrackingNumber" style="font-size: 1.5rem; font-weight: bold; color: #00ff00;"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- My Shipments Section (Protected) -->
+        <div id="myShipmentsSection" class="section" style="display: none;">
+            <div class="tracking-section">
+                <div class="section-title">
+                    <h3>My Shipments</h3>
+                    <p>View all your tracked shipments</p>
+                </div>
+                <div id="shipmentsList" class="tracking-list">
+                    <p style="text-align: center; color: #808080;">Loading your shipments...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Login</h3>
+                <button class="close-modal" onclick="closeModal('loginModal')">&times;</button>
+            </div>
+            <form onsubmit="login(event)">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required>
+                </div>
+                <button type="submit" class="btn-create">Login</button>
+                <div class="switch-auth">
+                    Don't have an account? <a onclick="switchToSignup()">Sign Up</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Sign Up</h3>
+                <button class="close-modal" onclick="closeModal('signupModal')">&times;</button>
+            </div>
+            <form onsubmit="signup(event)">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signupName" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" id="signupPhone" required>
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" required>
+                </div>
+                <button type="submit" class="btn-create">Sign Up</button>
+                <div class="switch-auth">
+                    Already have an account? <a onclick="switchToLogin()">Login</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 BlueWave Express Cargo. All rights reserved.</p>
+    </footer>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <script>
+        // Check authentication status on load
+        document.addEventListener('DOMContentLoaded', checkAuthStatus);
+
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth-status');
+                const data = await response.json();
+                
+                if (data.loggedIn) {
+                    document.getElementById('authButtons').style.display = 'none';
+                    document.getElementById('userMenu').style.display = 'flex';
+                    document.getElementById('userEmail').textContent = data.email;
+                    document.getElementById('createLink').style.display = 'inline';
+                    document.getElementById('myShipmentsLink').style.display = 'inline';
+                } else {
+                    document.getElementById('authButtons').style.display = 'flex';
+                    document.getElementById('userMenu').style.display = 'none';
+                    document.getElementById('createLink').style.display = 'none';
+                    document.getElementById('myShipmentsLink').style.display = 'none';
+                }
+            } catch (error) {
+                console.error('Auth check error:', error);
+            }
+        }
+
+        function showSection(section) {
+            document.querySelectorAll('.section').forEach(s => s.style.display = 'none');
+            
+            if (section === 'home') {
+                document.getElementById('homeSection').style.display = 'block';
+            } else if (section === 'tracking') {
+                document.getElementById('trackingSection').style.display = 'block';
+            } else if (section === 'create') {
+                document.getElementById('createSection').style.display = 'block';
+            } else if (section === 'myShipments') {
+                document.getElementById('myShipmentsSection').style.display = 'block';
+                loadUserShipments();
+            }
+            
+            document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+
+        function showLoginModal() {
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function showSignupModal() {
+            document.getElementById('signupModal').style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function switchToSignup() {
+            closeModal('loginModal');
+            showSignupModal();
+        }
+
+        function switchToLogin() {
+            closeModal('signupModal');
+            showLoginModal();
+        }
+
+        async function signup(event) {
+            event.preventDefault();
+            
+            const userData = {
+                name: document.getElementById('signupName').value,
+                email: document.getElementById('signupEmail').value,
+                phone: document.getElementById('signupPhone').value,
+                password: document.getElementById('signupPassword').value
+            };
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(userData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Account created successfully!', 'success');
+                    closeModal('signupModal');
+                    await checkAuthStatus();
+                } else {
+                    showAlert(data.error || 'Signup failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function login(event) {
+            event.preventDefault();
+            
+            const credentials = {
+                email: document.getElementById('loginEmail').value,
+                password: document.getElementById('loginPassword').value
+            };
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(credentials)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showAlert('Login successful!', 'success');
+                    closeModal('loginModal');
+                    await checkAuthStatus();
+                } else {
+                    showAlert(data.error || 'Login failed', 'error');
+                }
+            } catch (error) {
+                showAlert('Network error', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function logout() {
+            try {
+                await fetch('/api/logout', { method: 'POST' });
+                await checkAuthStatus();
+                showSection('home');
+                showAlert('Logged out successfully', 'success');
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+        }
+
+        async function trackShipment() {
+            const trackingNumber = document.getElementById('trackingInput').value || 
+                                 document.getElementById('trackingInput2').value;
+            
+            if (!trackingNumber) {
+                showAlert('Please enter a tracking number', 'error');
+                return;
+            }
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/tracking/track', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ trackingNumber })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayTrackingResult(data);
+                } else {
+                    showAlert(data.error || 'Tracking number not found', 'error');
+                }
+            } catch (error) {
+                showAlert('Error tracking shipment', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function displayTrackingResult(data) {
+            const resultDiv = document.getElementById('trackingResult');
+            const resultDiv2 = document.getElementById('trackingResult2');
+            
+            const statusClass = `status-${data.status.replace(/-/g, '-')}`;
+            
+            const timelineHtml = data.statusHistory.map((item, index) => `
+                <div class="timeline-item ${index === data.statusHistory.length - 1 ? 'current' : 'completed'}">
+                    <div style="flex: 1;">
+                        <strong>${item.status.replace(/-/g, ' ').toUpperCase()}</strong>
+                        <p style="color: #808080; font-size: 0.9rem;">${item.location}</p>
+                        <p style="color: #808080; font-size: 0.9rem;">${new Date(item.timestamp).toLocaleString()}</p>
+                        <p>${item.description}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            const html = `
+                <div class="tracking-header">
+                    <span class="tracking-number">${data.trackingNumber}</span>
+                    <span class="tracking-status ${statusClass}">${data.status.replace(/-/g, ' ')}</span>
+                </div>
+                <div class="tracking-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Current Location</div>
+                        <div class="detail-value">${data.currentLocation || 'N/A'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Estimated Delivery</div>
+                        <div class="detail-value">${data.estimatedDelivery ? new Date(data.estimatedDelivery).toLocaleDateString() : 'N/A'}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Last Update</div>
+                        <div class="detail-value">${new Date(data.lastUpdate).toLocaleString()}</div>
+                    </div>
+                </div>
+                <div class="timeline">
+                    <h4 style="margin-bottom: 1rem; color: #4a9eff;">Shipment Timeline</h4>
+                    ${timelineHtml}
+                </div>
+            `;
+
+            resultDiv.innerHTML = html;
+            resultDiv2.innerHTML = html;
+            resultDiv.style.display = 'block';
+            resultDiv2.style.display = 'block';
+        }
+
+        async function createTracking(event) {
+            event.preventDefault();
+
+            const trackingData = {
+                senderName: document.getElementById('senderName').value,
+                senderAddress: document.getElementById('senderAddress').value,
+                receiverName: document.getElementById('receiverName').value,
+                receiverAddress: document.getElementById('receiverAddress').value,
+                weight: document.getElementById('weight').value,
+                dimensions: document.getElementById('dimensions').value
+            };
+
+            showLoading();
+
+            try {
+                const response = await fetch('/api/tracking/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(trackingData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('newTrackingNumber').textContent = data.trackingNumber;
+                    document.getElementById('newTrackingResult').style.display = 'block';
+                    showAlert('Tracking number created successfully!', 'success');
+                    
+                    // Clear form
+                    document.getElementById('createTrackingForm').reset();
+                } else {
+                    showAlert(data.error || 'Failed to create tracking number', 'error');
+                }
+            } catch (error) {
+                showAlert('Error creating tracking number', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadUserShipments() {
+            try {
+                const response = await fetch('/api/user/trackings');
+                const data = await response.json();
+
+                if (response.ok) {
+                    const shipmentsList = document.getElementById('shipmentsList');
+                    
+                    if (data.length === 0) {
+                        shipmentsList.innerHTML = '<p style="text-align: center; color: #808080;">No shipments found</p>';
+                        return;
+                    }
+
+                    const html = data.map(shipment => `
+                        <div class="tracking-item" onclick="trackSpecificShipment('${shipment.trackingNumber}')">
+                            <div>
+                                <strong style="color: #4a9eff;">${shipment.trackingNumber}</strong>
+                                <p style="color: #808080;">${shipment.senderName} → ${shipment.receiverName}</p>
+                            </div>
+                            <span class="tracking-status status-${shipment.status.replace(/-/g, '-')}">${shipment.status}</span>
+                        </div>
+                    `).join('');
+
+                    shipmentsList.innerHTML = html;
+                }
+            } catch (error) {
+                console.error('Error loading shipments:', error);
+            }
+        }
+
+        function trackSpecificShipment(trackingNumber) {
+            document.getElementById('trackingInput').value = trackingNumber;
+            document.getElementById('trackingInput2').value = trackingNumber;
+            showSection('tracking');
+            trackShipment();
+        }
+
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            alertDiv.textContent = message;
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            if (event.target.classList.contains('modal')) {
+                event.target.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
