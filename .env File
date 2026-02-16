@@ -1,7 +1,4 @@
-# In your fello folder, create or update .env
-cat > .env << 'EOF'
 PORT=3000
 MONGODB_URI=mongodb+srv://Felo:Tillen@cluster0.fdppxfi.mongodb.net/bluewave?retryWrites=true&w=majority&appName=Cluster0
 JWT_SECRET=bluewave_express_cargo_secret_key_2024
-NODE_ENV=production
-EOF
+NODE_ENV=development

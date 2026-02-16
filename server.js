@@ -4,45 +4,81 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 require('dotenv').config();
 
 const app = express();
 
-// Middleware
+// ==================== CORS CONFIGURATION ====================
 app.use(cors({
-    origin: '*',
-    credentials: true
+    origin: [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://127.0.0.1:3000',
+        'https://bluewave-express.onrender.com',
+        '*'
+    ],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
 }));
+
+app.options('*', cors());
+
+// ==================== MIDDLEWARE ====================
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// IMPORTANT: Serve static files from the public folder
-app.use(express.static(path.join(__dirname, 'public')));
+// ==================== STATIC FILES ====================
+const publicPath = path.join(__dirname, 'public');
+const indexPath = path.join(publicPath, 'index.html');
 
-// MongoDB Connection
+console.log('='.repeat(50));
+console.log('🚀 BLUEWAVE EXPRESS CARGO - SERVER STARTUP');
+console.log('='.repeat(50));
+console.log(`📁 Current directory: ${__dirname}`);
+console.log(`📁 Public folder path: ${publicPath}`);
+console.log(`📄 Index.html path: ${indexPath}`);
+console.log(`📁 Public folder exists: ${fs.existsSync(publicPath)}`);
+console.log(`📄 Index.html exists: ${fs.existsSync(indexPath)}`);
+
+if (fs.existsSync(publicPath)) {
+    console.log('📂 Files in public folder:', fs.readdirSync(publicPath));
+}
+
+// Serve static files
+app.use(express.static(publicPath));
+
+// ==================== MONGODB CONNECTION ====================
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://Felo:Tillen@cluster0.fdppxfi.mongodb.net/bluewave?retryWrites=true&w=majority&appName=Cluster0';
 
-console.log('📡 Attempting to connect to MongoDB...');
-console.log('📍 Current directory:', __dirname);
-console.log('📁 Public folder path:', path.join(__dirname, 'public'));
+console.log('='.repeat(50));
+console.log('📡 Connecting to MongoDB...');
 
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 30000,
+    serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
 })
 .then(() => {
-    console.log('✅ Successfully connected to MongoDB Atlas');
+    console.log('✅ MongoDB Connected Successfully!');
     console.log('📊 Database: bluewave');
 })
 .catch(err => {
-    console.error('❌ MongoDB connection error:');
-    console.error('Error name:', err.name);
-    console.error('Error message:', err.message);
+    console.error('❌ MongoDB Connection Failed:');
+    console.error('Error:', err.message);
 });
 
-// User Schema
+mongoose.connection.on('error', err => {
+    console.error('🔴 MongoDB connection error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('⚠️ MongoDB disconnected');
+});
+
+// ==================== DATABASE SCHEMAS ====================
 const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
@@ -51,7 +87,6 @@ const userSchema = new mongoose.Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
-// Tracking Schema
 const trackingSchema = new mongoose.Schema({
     trackingNumber: { type: String, required: true, unique: true },
     senderName: { type: String, required: true },
@@ -77,7 +112,7 @@ const trackingSchema = new mongoose.Schema({
 const User = mongoose.model('User', userSchema);
 const Tracking = mongoose.model('Tracking', trackingSchema);
 
-// Generate random tracking number
+// ==================== HELPER FUNCTIONS ====================
 function generateTrackingNumber() {
     const prefix = 'BW';
     const numbers = Math.floor(100000000 + Math.random() * 900000000);
@@ -86,20 +121,48 @@ function generateTrackingNumber() {
 
 // ==================== API ROUTES ====================
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// ROOT TEST - This should always work
+app.get('/', (req, res) => {
     res.json({ 
-        status: 'OK', 
-        mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        database: 'bluewave',
-        staticPath: path.join(__dirname, 'public'),
-        timestamp: new Date().toISOString()
+        message: 'Bluewave Express Cargo API is running',
+        status: 'online',
+        time: new Date().toISOString(),
+        endpoints: {
+            health: '/api/health',
+            test: '/api/test',
+            signup: '/api/signup (POST)',
+            login: '/api/login (POST)',
+            track: '/api/track/:number (GET)',
+            createTracking: '/api/create-tracking (POST)'
+        }
     });
 });
 
-// Signup endpoint
+// SIMPLE HEALTH CHECK - ALWAYS WORKS
+app.get('/api/health', (req, res) => {
+    console.log('✅ Health check hit from:', req.headers.origin || 'unknown');
+    res.status(200).json({
+        status: 'OK',
+        message: 'Server is healthy',
+        mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+    });
+});
+
+// TEST ENDPOINT
+app.get('/api/test', (req, res) => {
+    res.json({ 
+        success: true, 
+        message: 'API is working!',
+        time: new Date().toISOString()
+    });
+});
+
+// SIGNUP ENDPOINT
 app.post('/api/signup', async (req, res) => {
     try {
+        console.log('📝 Signup attempt:', req.body.email);
         const { name, email, phone, password } = req.body;
 
         if (!name || !email || !phone || !password) {
@@ -112,14 +175,7 @@ app.post('/api/signup', async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = new User({
-            name,
-            email,
-            phone,
-            password: hashedPassword
-        });
-
+        const user = new User({ name, email, phone, password: hashedPassword });
         await user.save();
 
         const token = jwt.sign(
@@ -128,25 +184,22 @@ app.post('/api/signup', async (req, res) => {
             { expiresIn: '24h' }
         );
 
+        console.log('✅ User created:', email);
         res.status(201).json({
             message: 'User created successfully',
             token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone
-            }
+            user: { id: user._id, name: user.name, email: user.email, phone: user.phone }
         });
     } catch (error) {
-        console.error('Signup error:', error);
+        console.error('❌ Signup error:', error);
         res.status(500).json({ message: 'Error creating user' });
     }
 });
 
-// Login endpoint
+// LOGIN ENDPOINT
 app.post('/api/login', async (req, res) => {
     try {
+        console.log('🔑 Login attempt:', req.body.email);
         const { email, password } = req.body;
 
         if (!email || !password) {
@@ -169,23 +222,19 @@ app.post('/api/login', async (req, res) => {
             { expiresIn: '24h' }
         );
 
+        console.log('✅ Login successful:', email);
         res.json({
             message: 'Login successful',
             token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                phone: user.phone
-            }
+            user: { id: user._id, name: user.name, email: user.email, phone: user.phone }
         });
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         res.status(500).json({ message: 'Error during login' });
     }
 });
 
-// Create tracking
+// CREATE TRACKING
 app.post('/api/create-tracking', async (req, res) => {
     try {
         const { senderName, receiverName, origin, destination, estimatedDelivery } = req.body;
@@ -195,7 +244,6 @@ app.post('/api/create-tracking', async (req, res) => {
         }
 
         const trackingNumber = generateTrackingNumber();
-
         const tracking = new Tracking({
             trackingNumber,
             senderName,
@@ -212,23 +260,18 @@ app.post('/api/create-tracking', async (req, res) => {
         });
 
         await tracking.save();
-
-        res.status(201).json({
-            message: 'Tracking created successfully',
-            trackingNumber
-        });
+        console.log('📦 Tracking created:', trackingNumber);
+        res.status(201).json({ message: 'Tracking created successfully', trackingNumber });
     } catch (error) {
-        console.error('Create tracking error:', error);
+        console.error('❌ Create tracking error:', error);
         res.status(500).json({ message: 'Error creating tracking' });
     }
 });
 
-// Track shipment
+// TRACK SHIPMENT
 app.get('/api/track/:trackingNumber', async (req, res) => {
     try {
-        const tracking = await Tracking.findOne({ 
-            trackingNumber: req.params.trackingNumber 
-        });
+        const tracking = await Tracking.findOne({ trackingNumber: req.params.trackingNumber });
 
         if (!tracking) {
             return res.status(404).json({ message: 'Tracking number not found' });
@@ -252,24 +295,38 @@ app.get('/api/track/:trackingNumber', async (req, res) => {
             history: tracking.history.reverse()
         });
     } catch (error) {
-        console.error('Track error:', error);
+        console.error('❌ Track error:', error);
         res.status(500).json({ message: 'Error tracking shipment' });
     }
 });
 
-// ==================== FRONTEND ROUTE ====================
-// This serves your index.html for all non-API routes
+// ==================== SERVE FRONTEND ====================
 app.get('*', (req, res) => {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
-    console.log('📄 Serving index.html from:', indexPath);
-    res.sendFile(indexPath);
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        res.status(404).send(`
+            <html>
+                <head><title>Error</title></head>
+                <body style="background:#0a0a0a; color:#00ffff; font-family:Arial; padding:20px;">
+                    <h1>⚠️ index.html not found</h1>
+                    <p>Looking for: ${indexPath}</p>
+                    <p>Public folder contents: ${fs.existsSync(publicPath) ? fs.readdirSync(publicPath).join(', ') : 'public folder missing'}</p>
+                </body>
+            </html>
+        `);
+    }
 });
 
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server is running on port ${PORT}`);
-    console.log(`📁 Current directory: ${__dirname}`);
-    console.log(`📁 Public folder: ${path.join(__dirname, 'public')}`);
-    console.log(`📄 Index.html exists: ${require('fs').existsSync(path.join(__dirname, 'public', 'index.html'))}`);
+    console.log('='.repeat(50));
+    console.log(`✅ SERVER STARTED SUCCESSFULLY!`);
+    console.log('='.repeat(50));
+    console.log(`🌐 Local URL: http://localhost:${PORT}`);
+    console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
+    console.log(`📁 Public path: ${publicPath}`);
+    console.log(`📄 Index.html exists: ${fs.existsSync(indexPath)}`);
+    console.log('='.repeat(50));
 });
