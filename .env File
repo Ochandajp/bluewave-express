@@ -1,3 +1,4 @@
 PORT=3000
-MONGODB_URI=mongodb+srv://Felo:Tillen@cluster0.fdppxfi.mongodb.net/bluewave?retryWrites=true&w=majority
-JWT_SECRET=your_jwt_secret_key_here_change_this_in_production
+MONGODB_URI=mongodb+srv://Felo:Tillen@cluster0.fdppxfi.mongodb.net/bluewave?retryWrites=true&w=majority&appName=Cluster0
+JWT_SECRET=bluewave_express_cargo_secret_key_2024
+NODE_ENV=production
