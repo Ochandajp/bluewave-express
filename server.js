@@ -1,332 +1,421 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
+const bodyParser = require('body-parser');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const path = require('path');
-const fs = require('fs');
-require('dotenv').config();
 
 const app = express();
 
-// ==================== CORS CONFIGURATION ====================
+// Middleware
 app.use(cors({
-    origin: [
-        'http://localhost:3000',
-        'http://localhost:3001',
-        'http://127.0.0.1:3000',
-        'https://bluewave-express.onrender.com',
-        '*'
-    ],
-    credentials: true,
+    origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
+    allowedHeaders: ['Content-Type', 'Authorization']
 }));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname)));
 
-app.options('*', cors());
-
-// ==================== MIDDLEWARE ====================
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// ==================== STATIC FILES ====================
-const publicPath = path.join(__dirname, 'public');
-const indexPath = path.join(publicPath, 'index.html');
-
-console.log('='.repeat(50));
-console.log('🚀 BLUEWAVE EXPRESS CARGO - SERVER STARTUP');
-console.log('='.repeat(50));
-console.log(`📁 Current directory: ${__dirname}`);
-console.log(`📁 Public folder path: ${publicPath}`);
-console.log(`📄 Index.html path: ${indexPath}`);
-console.log(`📁 Public folder exists: ${fs.existsSync(publicPath)}`);
-console.log(`📄 Index.html exists: ${fs.existsSync(indexPath)}`);
-
-if (fs.existsSync(publicPath)) {
-    console.log('📂 Files in public folder:', fs.readdirSync(publicPath));
-}
-
-// Serve static files
-app.use(express.static(publicPath));
-
-// ==================== MONGODB CONNECTION ====================
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://Felo:Tillen@cluster0.fdppxfi.mongodb.net/bluewave?retryWrites=true&w=majority&appName=Cluster0';
-
-console.log('='.repeat(50));
-console.log('📡 Connecting to MongoDB...');
-
-mongoose.connect(MONGODB_URI, {
+// Connect to MongoDB
+mongoose.connect('mongodb+srv://johnpaul:jp54321@cluster0.ugm91.mongodb.net/', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,
-    socketTimeoutMS: 45000,
-})
-.then(() => {
-    console.log('✅ MongoDB Connected Successfully!');
-    console.log('📊 Database: bluewave');
-})
-.catch(err => {
-    console.error('❌ MongoDB Connection Failed:');
-    console.error('Error:', err.message);
-});
+}).then(() => console.log("MongoDB connection successful..."))
+  .catch(err => console.error("MongoDB connection error:", err));
 
-mongoose.connection.on('error', err => {
-    console.error('🔴 MongoDB connection error:', err);
-});
+// ============= SCHEMAS =============
 
-mongoose.connection.on('disconnected', () => {
-    console.log('⚠️ MongoDB disconnected');
-});
-
-// ==================== DATABASE SCHEMAS ====================
+// User Schema
 const userSchema = new mongoose.Schema({
-    name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    phone: { type: String, required: true },
-    password: { type: String, required: true },
-    createdAt: { type: Date, default: Date.now }
-});
-
-const trackingSchema = new mongoose.Schema({
-    trackingNumber: { type: String, required: true, unique: true },
-    senderName: { type: String, required: true },
-    receiverName: { type: String, required: true },
-    origin: { type: String, required: true },
-    destination: { type: String, required: true },
-    status: { 
-        type: String, 
-        enum: ['Pending', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'],
-        default: 'Pending'
-    },
-    currentLocation: { type: String, required: true },
-    estimatedDelivery: { type: Date, required: true },
-    lastUpdate: { type: Date, default: Date.now },
-    history: [{
-        status: String,
-        location: String,
-        timestamp: { type: Date, default: Date.now },
-        description: String
-    }]
+    name: String,
+    username: { type: String, unique: true },
+    email: { type: String, unique: true },
+    phone: String,
+    password: String,
+    taskType: { type: String, enum: ['regular', 'premium'], default: 'regular' },
+    balance: { type: Number, default: 0 },
+    isAdmin: { type: Boolean, default: false },
+    awardedTasks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Task' }],
+    accountType: { type: String, enum: ['regular', 'premium', 'admin'], default: 'regular' },
+    totalSpent: { type: Number, default: 0 },
+    createdAt: { type: Date, default: Date.now },
+    status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 });
 
 const User = mongoose.model('User', userSchema);
-const Tracking = mongoose.model('Tracking', trackingSchema);
 
-// ==================== HELPER FUNCTIONS ====================
-function generateTrackingNumber() {
-    const prefix = 'BW';
-    const numbers = Math.floor(100000000 + Math.random() * 900000000);
-    return prefix + numbers;
-}
-
-// ==================== API ROUTES ====================
-
-// ROOT TEST - This should always work
-app.get('/', (req, res) => {
-    res.json({ 
-        message: 'Bluewave Express Cargo API is running',
-        status: 'online',
-        time: new Date().toISOString(),
-        endpoints: {
-            health: '/api/health',
-            test: '/api/test',
-            signup: '/api/signup (POST)',
-            login: '/api/login (POST)',
-            track: '/api/track/:number (GET)',
-            createTracking: '/api/create-tracking (POST)'
-        }
-    });
+// Task Schema (keep existing)
+const taskSchema = new mongoose.Schema({
+    title: { type: String, required: true },
+    description: { type: String, required: true },
+    price: { type: Number, required: true },
+    accountType: { type: String, enum: ['regular', 'premium'], required: true },
+    status: { type: String, enum: ['available', 'awarded', 'completed', 'rejected'], default: 'available' },
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    awardedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    submission: { type: String },
+    createdAt: { type: Date, default: Date.now },
 });
 
-// SIMPLE HEALTH CHECK - ALWAYS WORKS
-app.get('/api/health', (req, res) => {
-    console.log('✅ Health check hit from:', req.headers.origin || 'unknown');
-    res.status(200).json({
-        status: 'OK',
-        message: 'Server is healthy',
-        mongodb: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        timestamp: new Date().toISOString(),
-        environment: process.env.NODE_ENV || 'development'
-    });
+const Task = mongoose.model('Task', taskSchema);
+
+// Shipment Schema
+const shipmentSchema = new mongoose.Schema({
+    trackingNumber: { type: String, unique: true, required: true },
+    recipientName: { type: String, required: true },
+    recipientEmail: String,
+    recipientPhone: { type: String, required: true },
+    deliveryAddress: { type: String, required: true },
+    origin: { type: String, required: true },
+    destination: { type: String, required: true },
+    carrier: String,
+    carrierRef: String,
+    shipmentType: { type: String, enum: ['AIR', 'WATER', 'ROAD'], default: 'ROAD' },
+    product: String,
+    quantity: Number,
+    pieceType: String,
+    description: String,
+    length: Number,
+    width: Number,
+    height: Number,
+    weight: Number,
+    paymentMode: { type: String, enum: ['cash', 'bank transfer', 'card', 'mobile money'], default: 'cash' },
+    expectedDelivery: Date,
+    departureTime: String,
+    pickupDate: Date,
+    status: { 
+        type: String, 
+        enum: ['pending', 'on hold', 'out for delivery', 'delivered'],
+        default: 'pending'
+    },
+    remark: String,
+    updatedBy: String,
+    trackingHistory: [{
+        status: String,
+        location: String,
+        message: String,
+        timestamp: { type: Date, default: Date.now },
+        updatedBy: String
+    }],
+    createdAt: { type: Date, default: Date.now },
+    updatedAt: { type: Date, default: Date.now }
 });
 
-// TEST ENDPOINT
-app.get('/api/test', (req, res) => {
-    res.json({ 
-        success: true, 
-        message: 'API is working!',
-        time: new Date().toISOString()
-    });
-});
+const Shipment = mongoose.model('Shipment', shipmentSchema);
 
-// SIGNUP ENDPOINT
-app.post('/api/signup', async (req, res) => {
+// JWT Secret
+const JWT_SECRET = 'your_jwt_secret_key_change_this_in_production';
+
+// ============= MIDDLEWARE =============
+
+const authenticate = (req, res, next) => {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) return res.status(401).json({ message: 'Access denied. No token provided.' });
+
     try {
-        console.log('📝 Signup attempt:', req.body.email);
-        const { name, email, phone, password } = req.body;
+        const decoded = jwt.verify(token, JWT_SECRET);
+        req.user = decoded;
+        next();
+    } catch (error) {
+        res.status(400).json({ message: 'Invalid token.' });
+    }
+};
 
-        if (!name || !email || !phone || !password) {
-            return res.status(400).json({ message: 'All fields are required' });
+const isAdmin = async (req, res, next) => {
+    try {
+        const user = await User.findById(req.user.id);
+        if (user && (user.isAdmin || user.accountType === 'admin')) {
+            next();
+        } else {
+            res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
+    } catch (error) {
+        res.status(400).json({ message: 'Error checking admin status', error });
+    }
+};
 
-        const existingUser = await User.findOne({ email });
+// ============= STATIC ROUTES =============
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/admin-login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin-login.html'));
+});
+
+app.get('/admin-dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
+});
+
+// ============= AUTH ROUTES =============
+
+app.post('/api/register', async (req, res) => {
+    const { name, username, email, phone, password } = req.body;
+
+    try {
+        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
         if (existingUser) {
-            return res.status(400).json({ message: 'User already exists' });
+            return res.status(400).json({ message: 'User already exists with this email or username' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ name, email, phone, password: hashedPassword });
+        const user = new User({ 
+            name, username, email, phone, password: hashedPassword,
+            taskType: 'regular', accountType: 'regular', balance: 0, isAdmin: false
+        });
+        
         await user.save();
+        const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET);
 
-        const token = jwt.sign(
-            { userId: user._id, email: user.email },
-            process.env.JWT_SECRET || 'bluewave_express_cargo_secret_key_2024',
-            { expiresIn: '24h' }
-        );
-
-        console.log('✅ User created:', email);
-        res.status(201).json({
-            message: 'User created successfully',
+        res.status(201).json({ 
+            message: 'User registered successfully', 
             token,
-            user: { id: user._id, name: user.name, email: user.email, phone: user.phone }
+            user: {
+                id: user._id, name: user.name, username: user.username,
+                email: user.email, phone: user.phone, accountType: user.accountType,
+                balance: user.balance, isAdmin: user.isAdmin
+            }
         });
     } catch (error) {
-        console.error('❌ Signup error:', error);
-        res.status(500).json({ message: 'Error creating user' });
+        res.status(400).json({ message: 'Error registering user', error: error.message });
     }
 });
 
-// LOGIN ENDPOINT
 app.post('/api/login', async (req, res) => {
+    const { username, password } = req.body;
+
     try {
-        console.log('🔑 Login attempt:', req.body.email);
-        const { email, password } = req.body;
+        const user = await User.findOne({ $or: [{ username }, { email: username }] });
+        if (!user) return res.status(401).json({ message: 'Invalid credentials.' });
 
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials.' });
+
+        if (user.status === 'inactive') {
+            return res.status(403).json({ message: 'Account is deactivated. Contact admin.' });
         }
 
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
+        const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET);
 
-        const validPassword = await bcrypt.compare(password, user.password);
-        if (!validPassword) {
-            return res.status(401).json({ message: 'Invalid email or password' });
-        }
-
-        const token = jwt.sign(
-            { userId: user._id, email: user.email },
-            process.env.JWT_SECRET || 'bluewave_express_cargo_secret_key_2024',
-            { expiresIn: '24h' }
-        );
-
-        console.log('✅ Login successful:', email);
-        res.json({
-            message: 'Login successful',
+        res.status(200).json({ 
+            message: 'Login successful', 
             token,
-            user: { id: user._id, name: user.name, email: user.email, phone: user.phone }
+            user: {
+                id: user._id, name: user.name, username: user.username,
+                email: user.email, phone: user.phone, taskType: user.taskType,
+                accountType: user.accountType, balance: user.balance,
+                isAdmin: user.isAdmin || user.accountType === 'admin',
+                createdAt: user.createdAt
+            }
         });
     } catch (error) {
-        console.error('❌ Login error:', error);
-        res.status(500).json({ message: 'Error during login' });
+        res.status(400).json({ message: 'Error logging in', error: error.message });
     }
 });
 
-// CREATE TRACKING
-app.post('/api/create-tracking', async (req, res) => {
-    try {
-        const { senderName, receiverName, origin, destination, estimatedDelivery } = req.body;
+// ============= SHIPMENT ROUTES =============
 
-        if (!senderName || !receiverName || !origin || !destination || !estimatedDelivery) {
-            return res.status(400).json({ message: 'All fields are required' });
+// Create shipment (admin only)
+app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
+    try {
+        console.log('Received shipment data:', req.body); // Debug log
+        
+        const shipmentData = req.body;
+        
+        // Generate 9-digit tracking number if not provided
+        if (!shipmentData.trackingNumber) {
+            let trackingNumber;
+            let exists;
+            do {
+                trackingNumber = Math.floor(100000000 + Math.random() * 900000000).toString();
+                exists = await Shipment.findOne({ trackingNumber });
+            } while (exists);
+            shipmentData.trackingNumber = trackingNumber;
+        } else {
+            // Validate 9-digit format
+            if (!/^\d{9}$/.test(shipmentData.trackingNumber)) {
+                return res.status(400).json({ message: 'Tracking number must be exactly 9 digits' });
+            }
+            
+            // Check if tracking number already exists
+            const existing = await Shipment.findOne({ trackingNumber: shipmentData.trackingNumber });
+            if (existing) {
+                return res.status(400).json({ message: 'Tracking number already exists' });
+            }
         }
 
-        const trackingNumber = generateTrackingNumber();
-        const tracking = new Tracking({
-            trackingNumber,
-            senderName,
-            receiverName,
-            origin,
-            destination,
-            currentLocation: origin,
-            estimatedDelivery: new Date(estimatedDelivery),
-            history: [{
-                status: 'Pending',
-                location: origin,
-                description: 'Shipment information received'
-            }]
-        });
-
-        await tracking.save();
-        console.log('📦 Tracking created:', trackingNumber);
-        res.status(201).json({ message: 'Tracking created successfully', trackingNumber });
-    } catch (error) {
-        console.error('❌ Create tracking error:', error);
-        res.status(500).json({ message: 'Error creating tracking' });
-    }
-});
-
-// TRACK SHIPMENT
-app.get('/api/track/:trackingNumber', async (req, res) => {
-    try {
-        const tracking = await Tracking.findOne({ trackingNumber: req.params.trackingNumber });
-
-        if (!tracking) {
-            return res.status(404).json({ message: 'Tracking number not found' });
+        // Add initial tracking history
+        if (!shipmentData.trackingHistory || shipmentData.trackingHistory.length === 0) {
+            shipmentData.trackingHistory = [{
+                status: shipmentData.status || 'pending',
+                location: shipmentData.origin,
+                message: 'Shipment created',
+                timestamp: new Date(),
+                updatedBy: shipmentData.updatedBy || 'Admin'
+            }];
         }
 
-        const statuses = ['Pending', 'Picked Up', 'In Transit', 'Out for Delivery', 'Delivered'];
-        const currentStatusIndex = statuses.indexOf(tracking.status);
-        const progress = ((currentStatusIndex + 1) / statuses.length) * 100;
+        const shipment = new Shipment(shipmentData);
+        await shipment.save();
 
-        res.json({
-            trackingNumber: tracking.trackingNumber,
-            senderName: tracking.senderName,
-            receiverName: tracking.receiverName,
-            origin: tracking.origin,
-            destination: tracking.destination,
-            status: tracking.status,
-            currentLocation: tracking.currentLocation,
-            estimatedDelivery: tracking.estimatedDelivery,
-            lastUpdate: tracking.lastUpdate,
-            progress: progress,
-            history: tracking.history.reverse()
+        console.log('Shipment created successfully:', shipment.trackingNumber); // Debug log
+
+        res.status(201).json({ 
+            message: 'Shipment created successfully', 
+            shipment,
+            trackingNumber: shipment.trackingNumber 
         });
     } catch (error) {
-        console.error('❌ Track error:', error);
-        res.status(500).json({ message: 'Error tracking shipment' });
+        console.error('Create shipment error:', error);
+        res.status(400).json({ message: 'Error creating shipment', error: error.message });
     }
 });
 
-// ==================== SERVE FRONTEND ====================
-app.get('*', (req, res) => {
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        res.status(404).send(`
-            <html>
-                <head><title>Error</title></head>
-                <body style="background:#0a0a0a; color:#00ffff; font-family:Arial; padding:20px;">
-                    <h1>⚠️ index.html not found</h1>
-                    <p>Looking for: ${indexPath}</p>
-                    <p>Public folder contents: ${fs.existsSync(publicPath) ? fs.readdirSync(publicPath).join(', ') : 'public folder missing'}</p>
-                </body>
-            </html>
-        `);
+// Get all shipments (admin only)
+app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
+    try {
+        const shipments = await Shipment.find().sort({ createdAt: -1 });
+        res.status(200).json(shipments);
+    } catch (error) {
+        console.error('Error fetching shipments:', error);
+        res.status(400).json({ message: 'Error fetching shipments', error: error.message });
     }
 });
 
-// ==================== START SERVER ====================
-const PORT = process.env.PORT || 3000;
+// Public tracking - NO AUTH REQUIRED
+app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
+    try {
+        console.log('Tracking search for:', req.params.trackingNumber); // Debug log
+        
+        const shipment = await Shipment.findOne({ 
+            trackingNumber: req.params.trackingNumber 
+        });
+
+        if (!shipment) {
+            console.log('Shipment not found'); // Debug log
+            return res.status(404).json({ message: 'Shipment not found' });
+        }
+
+        console.log('Shipment found:', shipment.trackingNumber); // Debug log
+        res.status(200).json(shipment);
+    } catch (error) {
+        console.error('Error tracking shipment:', error);
+        res.status(400).json({ message: 'Error tracking shipment', error: error.message });
+    }
+});
+
+// Get single shipment by ID (admin only)
+app.get('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) => {
+    try {
+        const shipment = await Shipment.findById(req.params.id);
+        if (!shipment) {
+            return res.status(404).json({ message: 'Shipment not found' });
+        }
+        res.status(200).json(shipment);
+    } catch (error) {
+        console.error('Error fetching shipment:', error);
+        res.status(400).json({ message: 'Error fetching shipment', error: error.message });
+    }
+});
+
+// Update shipment status (admin only)
+app.put('/api/admin/shipments/:id/status', authenticate, isAdmin, async (req, res) => {
+    try {
+        const { status, location, message, updatedBy } = req.body;
+        
+        const shipment = await Shipment.findById(req.params.id);
+        if (!shipment) {
+            return res.status(404).json({ message: 'Shipment not found' });
+        }
+
+        shipment.status = status || shipment.status;
+        shipment.trackingHistory.push({
+            status: shipment.status,
+            location: location || shipment.origin,
+            message: message || `Status updated to ${shipment.status}`,
+            timestamp: new Date(),
+            updatedBy: updatedBy || 'Admin'
+        });
+
+        shipment.updatedAt = new Date();
+        await shipment.save();
+
+        res.status(200).json({ 
+            message: 'Shipment status updated successfully', 
+            shipment 
+        });
+    } catch (error) {
+        console.error('Error updating shipment status:', error);
+        res.status(400).json({ message: 'Error updating shipment status', error: error.message });
+    }
+});
+
+// Delete shipment (admin only)
+app.delete('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) => {
+    try {
+        const shipment = await Shipment.findByIdAndDelete(req.params.id);
+        if (!shipment) {
+            return res.status(404).json({ message: 'Shipment not found' });
+        }
+        res.status(200).json({ message: 'Shipment deleted successfully' });
+    } catch (error) {
+        console.error('Error deleting shipment:', error);
+        res.status(400).json({ message: 'Error deleting shipment', error: error.message });
+    }
+});
+
+// Dashboard stats (admin only)
+app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
+    try {
+        const totalShipments = await Shipment.countDocuments();
+        const activeShipments = await Shipment.countDocuments({ 
+            status: { $in: ['processing', 'in transit', 'out for delivery'] }
+        });
+        const deliveredShipments = await Shipment.countDocuments({ status: 'delivered' });
+        const pendingShipments = await Shipment.countDocuments({ status: 'pending' });
+        
+        const recentShipments = await Shipment.find()
+            .sort({ createdAt: -1 })
+            .limit(5)
+            .select('trackingNumber recipientName origin destination status');
+
+        res.status(200).json({
+            totalShipments,
+            activeShipments,
+            deliveredShipments,
+            pendingShipments,
+            recentShipments
+        });
+    } catch (error) {
+        console.error('Error fetching stats:', error);
+        res.status(400).json({ message: 'Error fetching stats', error: error.message });
+    }
+});
+
+// ============= HEALTH CHECK =============
+
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ 
+        status: 'OK', 
+        message: 'Bluewave Express Cargo API is running',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// ============= ERROR HANDLING =============
+
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err);
+    res.status(500).json({ message: 'Internal server error', error: err.message });
+});
+
+// ============= START SERVER =============
+
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
-    console.log('='.repeat(50));
-    console.log(`✅ SERVER STARTED SUCCESSFULLY!`);
-    console.log('='.repeat(50));
-    console.log(`🌐 Local URL: http://localhost:${PORT}`);
-    console.log(`🔗 Health check: http://localhost:${PORT}/api/health`);
-    console.log(`📁 Public path: ${publicPath}`);
-    console.log(`📄 Index.html exists: ${fs.existsSync(indexPath)}`);
-    console.log('='.repeat(50));
+    console.log(`Server running on http://0.0.0.0:${PORT}`);
+    console.log(`Access your app at: http://localhost:${PORT}`);
 });
