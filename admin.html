@@ -605,6 +605,10 @@
             </div>
             <button class="login-btn" onclick="adminLogin()">Login</button>
             <div class="error-message" id="loginError"></div>
+            <div style="text-align: center; margin-top: 1rem; color: #888;">
+                <p>Default: admin / admin123</p>
+                <p><a href="#" onclick="setupAdmin()" style="color: #00ffff;">Click here to setup admin</a></p>
+            </div>
         </div>
     </div>
 
@@ -903,14 +907,15 @@
     </div>
 
     <script>
-        const API_URL = window.location.origin;
+        // Use the Render.com URL for API calls
+        const API_URL = 'https://bluewave-express-cargo.onrender.com';
 
         // Check if user is logged in
         function checkAuth() {
             const token = localStorage.getItem('token');
             const admin = JSON.parse(localStorage.getItem('admin') || '{}');
             
-            if (token && admin) {
+            if (token && admin && admin.id) {
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('dashboardSection').style.display = 'block';
                 document.getElementById('adminName').textContent = admin.name || 'Admin';
@@ -921,12 +926,44 @@
             }
         }
 
+        // Setup admin function
+        async function setupAdmin() {
+            const errorEl = document.getElementById('loginError');
+            errorEl.classList.remove('active');
+            
+            try {
+                const response = await fetch(`${API_URL}/api/setup-admin`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    errorEl.style.color = '#00ff00';
+                    errorEl.innerHTML = `
+                        <div style="color: #00ff00;">
+                            ✅ ${data.message}<br>
+                            Username: ${data.credentials.username}<br>
+                            Password: ${data.credentials.password}
+                        </div>
+                    `;
+                    errorEl.classList.add('active');
+                } else {
+                    errorEl.textContent = data.message || 'Setup failed';
+                    errorEl.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Setup error:', error);
+                errorEl.textContent = 'Cannot connect to server';
+                errorEl.classList.add('active');
+            }
+        }
+
         // Admin login
         async function adminLogin() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
             const errorEl = document.getElementById('loginError');
 
+            errorEl.classList.remove('active');
+            
             if (!username || !password) {
                 errorEl.textContent = 'Please enter both username and password';
                 errorEl.classList.add('active');
@@ -934,15 +971,31 @@
             }
 
             try {
+                console.log('Connecting to:', API_URL);
+                
+                // First test if API is reachable
+                const testResponse = await fetch(`${API_URL}/api/test`);
+                const testData = await testResponse.json();
+                console.log('API Test:', testData);
+
+                if (!testData.success) {
+                    throw new Error('API not responding properly');
+                }
+
+                // Now try login
                 const response = await fetch(`${API_URL}/api/admin/login`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
                     body: JSON.stringify({ username, password })
                 });
 
                 const data = await response.json();
+                console.log('Login response:', data);
 
-                if (response.ok) {
+                if (response.ok && data.success) {
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('admin', JSON.stringify(data.admin));
                     checkAuth();
@@ -951,7 +1004,17 @@
                     errorEl.classList.add('active');
                 }
             } catch (error) {
-                errorEl.textContent = 'Network error. Please try again.';
+                console.error('Login error:', error);
+                errorEl.innerHTML = `
+                    <div style="text-align: left;">
+                        <p>❌ Cannot connect to server</p>
+                        <p>🔍 Check:</p>
+                        <p>1. <a href="${API_URL}/api/test" target="_blank">Test API</a></p>
+                        <p>2. <a href="${API_URL}/api/setup-admin" target="_blank">Setup Admin</a></p>
+                        <p>3. <a href="${API_URL}/admin" target="_blank">Admin Page</a></p>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
                 errorEl.classList.add('active');
             }
         }
@@ -1030,13 +1093,15 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    document.getElementById('totalShipments').textContent = data.totalShipments || 0;
-                    document.getElementById('activeShipments').textContent = data.activeShipments || 0;
-                    document.getElementById('deliveredShipments').textContent = data.deliveredShipments || 0;
-                    document.getElementById('pendingShipments').textContent = data.pendingShipments || 0;
-                    
-                    if (data.recentShipments) {
-                        displayRecentShipments(data.recentShipments);
+                    if (data.success) {
+                        document.getElementById('totalShipments').textContent = data.totalShipments || 0;
+                        document.getElementById('activeShipments').textContent = data.activeShipments || 0;
+                        document.getElementById('deliveredShipments').textContent = data.deliveredShipments || 0;
+                        document.getElementById('pendingShipments').textContent = data.pendingShipments || 0;
+                        
+                        if (data.recentShipments) {
+                            displayRecentShipments(data.recentShipments);
+                        }
                     }
                 }
             } catch (error) {
@@ -1085,8 +1150,12 @@
                 });
 
                 if (response.ok) {
-                    const shipments = await response.json();
-                    displayShipments(shipments);
+                    const data = await response.json();
+                    if (data.success) {
+                        displayShipments(data.shipments);
+                    } else {
+                        showError('Failed to load shipments');
+                    }
                 } else {
                     showError('Failed to load shipments');
                 }
@@ -1183,7 +1252,7 @@
 
                 const data = await response.json();
 
-                if (response.ok) {
+                if (response.ok && data.success) {
                     showSuccess(`Shipment created successfully! Tracking: ${data.trackingNumber}`);
                     document.getElementById('shipmentForm').reset();
                     setTimeout(() => showSection('shipments'), 2000);
@@ -1208,9 +1277,13 @@
                 });
 
                 if (response.ok) {
-                    const shipment = await response.json();
-                    displayShipmentDetails(shipment);
-                    document.getElementById('viewShipmentModal').classList.add('active');
+                    const data = await response.json();
+                    if (data.success) {
+                        displayShipmentDetails(data.shipment);
+                        document.getElementById('viewShipmentModal').classList.add('active');
+                    } else {
+                        showError('Failed to load shipment details');
+                    }
                 } else {
                     showError('Failed to load shipment details');
                 }
@@ -1314,8 +1387,13 @@
                 });
 
                 if (response.ok) {
-                    showSuccess('Shipment deleted successfully');
-                    loadShipments();
+                    const data = await response.json();
+                    if (data.success) {
+                        showSuccess('Shipment deleted successfully');
+                        loadShipments();
+                    } else {
+                        showError('Failed to delete shipment');
+                    }
                 } else {
                     showError('Failed to delete shipment');
                 }

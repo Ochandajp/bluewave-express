@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bluewave Express Cargo - Track Your Shipment</title>
     <style>
-        /* Add all the styles from previous index.html */
-        /* I'll keep this concise - use the styles from earlier response */
         * {
             margin: 0;
             padding: 0;
@@ -475,7 +473,8 @@
     </footer>
 
     <script>
-        const API_URL = window.location.origin;
+        // Use the Render.com URL for API calls
+        const API_URL = 'https://bluewave-express-cargo.onrender.com';
 
         async function trackShipment() {
             const trackingNumber = document.getElementById('trackingNumber').value.trim();
@@ -507,9 +506,13 @@
                     throw new Error('Shipment not found');
                 }
 
-                const shipment = await response.json();
-                displayShipmentDetails(shipment);
-                resultDiv.classList.add('active');
+                const data = await response.json();
+                if (data.success) {
+                    displayShipmentDetails(data.shipment);
+                    resultDiv.classList.add('active');
+                } else {
+                    throw new Error('Shipment not found');
+                }
             } catch (error) {
                 errorElement.textContent = 'Tracking number not found. Please check and try again.';
                 errorElement.classList.add('active');
