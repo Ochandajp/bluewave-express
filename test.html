@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Testing Bluewave Express API</h1>
+    <div id="result"></div>
+
+    <script>
+        async function testAPI() {
+            const result = document.getElementById('result');
+            
+            try {
+                // Test health endpoint
+                const healthRes = await fetch('https://writershub-backend1.onrender.com/api/health');
+                const healthData = await healthRes.json();
+                
+                result.innerHTML = `<p style="color: green;">✓ Health endpoint: OK</p>
+                                   <pre>${JSON.stringify(healthData, null, 2)}</pre>`;
+            } catch (error) {
+                result.innerHTML = `<p style="color: red;">✗ Error: ${error.message}</p>`;
+            }
+        }
+        
+        testAPI();
+    </script>
+</body>
+</html>

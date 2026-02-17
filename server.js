@@ -14,52 +14,38 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname)));
 
-// Connect to MongoDB
-mongoose.connect('mongodb+srv://johnpaul:jp54321@cluster0.ugm91.mongodb.net/', {
+// ============= MongoDB Connection =============
+const MONGODB_URI = 'mongodb+srv://johnpaul:jp54321@cluster0.ugm91.mongodb.net/bluewave?retryWrites=true&w=majority&appName=Cluster0';
+
+mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-}).then(() => console.log("MongoDB connection successful..."))
-  .catch(err => console.error("MongoDB connection error:", err));
+})
+.then(() => {
+    console.log('✅ MongoDB Connected Successfully');
+    console.log('📊 Database:', mongoose.connection.name);
+})
+.catch(err => {
+    console.error('❌ MongoDB Connection Error:', err.message);
+    process.exit(1);
+});
 
 // ============= SCHEMAS =============
 
-// User Schema
-const userSchema = new mongoose.Schema({
-    name: String,
-    username: { type: String, unique: true },
-    email: { type: String, unique: true },
-    phone: String,
-    password: String,
-    taskType: { type: String, enum: ['regular', 'premium'], default: 'regular' },
-    balance: { type: Number, default: 0 },
-    isAdmin: { type: Boolean, default: false },
-    awardedTasks: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Task' }],
-    accountType: { type: String, enum: ['regular', 'premium', 'admin'], default: 'regular' },
-    totalSpent: { type: Number, default: 0 },
+// Admin User Schema (simplified)
+const adminSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    username: { type: String, unique: true, required: true },
+    email: { type: String, unique: true, required: true },
+    password: { type: String, required: true },
+    isAdmin: { type: Boolean, default: true },
     createdAt: { type: Date, default: Date.now },
-    status: { type: String, enum: ['active', 'inactive'], default: 'active' }
-});
-
-const User = mongoose.model('User', userSchema);
-
-// Task Schema
-const taskSchema = new mongoose.Schema({
-    title: { type: String, required: true },
-    description: { type: String, required: true },
-    price: { type: Number, required: true },
-    accountType: { type: String, enum: ['regular', 'premium'], required: true },
-    status: { type: String, enum: ['available', 'awarded', 'completed', 'rejected'], default: 'available' },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    awardedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-    submission: { type: String },
-    createdAt: { type: Date, default: Date.now },
-});
-
-const Task = mongoose.model('Task', taskSchema);
+    lastLogin: Date
+}, { collection: 'admins' });
 
 // Shipment Schema
 const shipmentSchema = new mongoose.Schema({
@@ -101,12 +87,13 @@ const shipmentSchema = new mongoose.Schema({
     }],
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
-});
+}, { collection: 'shipments' });
 
+const Admin = mongoose.model('Admin', adminSchema);
 const Shipment = mongoose.model('Shipment', shipmentSchema);
 
 // JWT Secret
-const JWT_SECRET = 'your_jwt_secret_key_change_this_in_production';
+const JWT_SECRET = 'bluewave_express_cargo_secret_key_2026';
 
 // ============= MIDDLEWARE =============
 
@@ -116,7 +103,7 @@ const authenticate = (req, res, next) => {
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET);
-        req.user = decoded;
+        req.admin = decoded;
         next();
     } catch (error) {
         res.status(400).json({ message: 'Invalid token.' });
@@ -125,14 +112,14 @@ const authenticate = (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
     try {
-        const user = await User.findById(req.user.id);
-        if (user && (user.isAdmin || user.accountType === 'admin')) {
+        const admin = await Admin.findById(req.admin.id);
+        if (admin && admin.isAdmin) {
             next();
         } else {
             res.status(403).json({ message: 'Access denied. Admin privileges required.' });
         }
     } catch (error) {
-        res.status(400).json({ message: 'Error checking admin status', error });
+        res.status(400).json({ message: 'Error checking admin status', error: error.message });
     }
 };
 
@@ -142,73 +129,75 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.get('/admin-login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin-login.html'));
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-app.get('/admin-dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin-login.html'));
-});
+// ============= ADMIN AUTH ROUTES =============
 
-// ============= AUTH ROUTES =============
-
-app.post('/api/register', async (req, res) => {
-    const { name, username, email, phone, password } = req.body;
-
+// Create initial admin (run once)
+app.get('/api/setup-admin', async (req, res) => {
     try {
-        const existingUser = await User.findOne({ $or: [{ email }, { username }] });
-        if (existingUser) {
-            return res.status(400).json({ message: 'User already exists with this email or username' });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const user = new User({ 
-            name, username, email, phone, password: hashedPassword,
-            taskType: 'regular', accountType: 'regular', balance: 0, isAdmin: false
-        });
+        const adminExists = await Admin.findOne({ username: 'admin' });
         
-        await user.save();
-        const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET);
-
-        res.status(201).json({ 
-            message: 'User registered successfully', 
-            token,
-            user: {
-                id: user._id, name: user.name, username: user.username,
-                email: user.email, phone: user.phone, accountType: user.accountType,
-                balance: user.balance, isAdmin: user.isAdmin
-            }
-        });
+        if (!adminExists) {
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            const admin = new Admin({
+                name: 'System Administrator',
+                username: 'admin',
+                email: 'admin@bluewave.com',
+                password: hashedPassword,
+                isAdmin: true
+            });
+            
+            await admin.save();
+            res.json({ message: '✅ Default admin created - Username: admin, Password: admin123' });
+        } else {
+            res.json({ message: '✅ Admin already exists' });
+        }
     } catch (error) {
-        res.status(400).json({ message: 'Error registering user', error: error.message });
+        res.status(500).json({ message: 'Error setting up admin', error: error.message });
     }
 });
 
-app.post('/api/login', async (req, res) => {
-    const { username, password } = req.body;
-
+// Admin login
+app.post('/api/admin/login', async (req, res) => {
     try {
-        const user = await User.findOne({ $or: [{ username }, { email: username }] });
-        if (!user) return res.status(401).json({ message: 'Invalid credentials.' });
+        const { username, password } = req.body;
 
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) return res.status(401).json({ message: 'Invalid credentials.' });
-
-        if (user.status === 'inactive') {
-            return res.status(403).json({ message: 'Account is deactivated. Contact admin.' });
+        const admin = await Admin.findOne({ 
+            $or: [{ username }, { email: username }] 
+        });
+        
+        if (!admin) {
+            return res.status(401).json({ message: 'Invalid credentials.' });
         }
 
-        const token = jwt.sign({ id: user._id, username: user.username }, JWT_SECRET);
+        const isPasswordValid = await bcrypt.compare(password, admin.password);
+        if (!isPasswordValid) {
+            return res.status(401).json({ message: 'Invalid credentials.' });
+        }
+
+        // Update last login
+        admin.lastLogin = new Date();
+        await admin.save();
+
+        const token = jwt.sign(
+            { id: admin._id, username: admin.username, isAdmin: admin.isAdmin }, 
+            JWT_SECRET,
+            { expiresIn: '7d' }
+        );
 
         res.status(200).json({ 
             message: 'Login successful', 
             token,
-            user: {
-                id: user._id, name: user.name, username: user.username,
-                email: user.email, phone: user.phone, taskType: user.taskType,
-                accountType: user.accountType, balance: user.balance,
-                isAdmin: user.isAdmin || user.accountType === 'admin',
-                createdAt: user.createdAt
+            admin: {
+                id: admin._id,
+                name: admin.name,
+                username: admin.username,
+                email: admin.email,
+                isAdmin: admin.isAdmin,
+                lastLogin: admin.lastLogin
             }
         });
     } catch (error) {
@@ -221,7 +210,7 @@ app.post('/api/login', async (req, res) => {
 // Create shipment (admin only)
 app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
     try {
-        console.log('Received shipment data:', req.body);
+        console.log('📦 Creating new shipment...');
         
         const shipmentData = { ...req.body };
         
@@ -229,10 +218,18 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
         if (!shipmentData.trackingNumber) {
             let trackingNumber;
             let exists;
+            let attempts = 0;
+            const maxAttempts = 10;
+            
             do {
                 trackingNumber = Math.floor(100000000 + Math.random() * 900000000).toString();
                 exists = await Shipment.findOne({ trackingNumber });
+                attempts++;
+                if (attempts > maxAttempts) {
+                    return res.status(500).json({ message: 'Could not generate unique tracking number' });
+                }
             } while (exists);
+            
             shipmentData.trackingNumber = trackingNumber;
         } else {
             // Validate 9-digit format
@@ -247,26 +244,26 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             }
         }
 
-        // Clean up empty values
-        Object.keys(shipmentData).forEach(key => {
-            if (shipmentData[key] === '' || shipmentData[key] === null || shipmentData[key] === undefined) {
-                delete shipmentData[key];
-            }
-        });
-
         // Add initial tracking history
         shipmentData.trackingHistory = [{
             status: shipmentData.status || 'pending',
             location: shipmentData.origin || 'Origin',
             message: 'Shipment created',
             timestamp: new Date(),
-            updatedBy: shipmentData.updatedBy || 'Admin'
+            updatedBy: req.admin.username || 'Admin'
         }];
+
+        // Clean up empty values
+        ['quantity', 'length', 'width', 'height', 'weight'].forEach(field => {
+            if (shipmentData[field] === '' || shipmentData[field] === null || shipmentData[field] === undefined) {
+                delete shipmentData[field];
+            }
+        });
 
         const shipment = new Shipment(shipmentData);
         await shipment.save();
 
-        console.log('Shipment created successfully:', shipment.trackingNumber);
+        console.log('✅ Shipment created successfully:', shipment.trackingNumber);
 
         res.status(201).json({ 
             message: 'Shipment created successfully', 
@@ -274,7 +271,7 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             trackingNumber: shipment.trackingNumber 
         });
     } catch (error) {
-        console.error('Create shipment error:', error);
+        console.error('❌ Create shipment error:', error);
         res.status(400).json({ message: 'Error creating shipment', error: error.message });
     }
 });
@@ -285,7 +282,7 @@ app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
         const shipments = await Shipment.find().sort({ createdAt: -1 });
         res.status(200).json(shipments);
     } catch (error) {
-        console.error('Error fetching shipments:', error);
+        console.error('❌ Error fetching shipments:', error);
         res.status(400).json({ message: 'Error fetching shipments', error: error.message });
     }
 });
@@ -293,21 +290,21 @@ app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
 // Public tracking - NO AUTH REQUIRED
 app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
     try {
-        console.log('Tracking search for:', req.params.trackingNumber);
+        console.log('🔍 Tracking search for:', req.params.trackingNumber);
         
         const shipment = await Shipment.findOne({ 
             trackingNumber: req.params.trackingNumber 
         });
 
         if (!shipment) {
-            console.log('Shipment not found');
+            console.log('❌ Shipment not found');
             return res.status(404).json({ message: 'Shipment not found' });
         }
 
-        console.log('Shipment found:', shipment.trackingNumber);
+        console.log('✅ Shipment found:', shipment.trackingNumber);
         res.status(200).json(shipment);
     } catch (error) {
-        console.error('Error tracking shipment:', error);
+        console.error('❌ Error tracking shipment:', error);
         res.status(400).json({ message: 'Error tracking shipment', error: error.message });
     }
 });
@@ -321,7 +318,7 @@ app.get('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) => {
         }
         res.status(200).json(shipment);
     } catch (error) {
-        console.error('Error fetching shipment:', error);
+        console.error('❌ Error fetching shipment:', error);
         res.status(400).json({ message: 'Error fetching shipment', error: error.message });
     }
 });
@@ -339,10 +336,10 @@ app.put('/api/admin/shipments/:id/status', authenticate, isAdmin, async (req, re
         shipment.status = status || shipment.status;
         shipment.trackingHistory.push({
             status: shipment.status,
-            location: location || shipment.origin,
+            location: location || shipment.origin || 'Unknown',
             message: message || `Status updated to ${shipment.status}`,
             timestamp: new Date(),
-            updatedBy: updatedBy || 'Admin'
+            updatedBy: updatedBy || req.admin.username || 'Admin'
         });
 
         shipment.updatedAt = new Date();
@@ -353,7 +350,7 @@ app.put('/api/admin/shipments/:id/status', authenticate, isAdmin, async (req, re
             shipment 
         });
     } catch (error) {
-        console.error('Error updating shipment status:', error);
+        console.error('❌ Error updating shipment status:', error);
         res.status(400).json({ message: 'Error updating shipment status', error: error.message });
     }
 });
@@ -367,7 +364,7 @@ app.delete('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) =
         }
         res.status(200).json({ message: 'Shipment deleted successfully' });
     } catch (error) {
-        console.error('Error deleting shipment:', error);
+        console.error('❌ Error deleting shipment:', error);
         res.status(400).json({ message: 'Error deleting shipment', error: error.message });
     }
 });
@@ -377,7 +374,7 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
     try {
         const totalShipments = await Shipment.countDocuments();
         const activeShipments = await Shipment.countDocuments({ 
-            status: { $in: ['pending', 'on hold', 'out for delivery'] }
+            status: { $in: ['out for delivery', 'on hold'] }
         });
         const deliveredShipments = await Shipment.countDocuments({ status: 'delivered' });
         const pendingShipments = await Shipment.countDocuments({ status: 'pending' });
@@ -395,7 +392,7 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
             recentShipments
         });
     } catch (error) {
-        console.error('Error fetching stats:', error);
+        console.error('❌ Error fetching stats:', error);
         res.status(400).json({ message: 'Error fetching stats', error: error.message });
     }
 });
@@ -406,21 +403,50 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ 
         status: 'OK', 
         message: 'Bluewave Express Cargo API is running',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        database: mongoose.connection.name || 'Connected'
     });
 });
 
 // ============= ERROR HANDLING =============
 
 app.use((err, req, res, next) => {
-    console.error('Unhandled error:', err);
+    console.error('❌ Unhandled error:', err);
     res.status(500).json({ message: 'Internal server error', error: err.message });
 });
 
 // ============= START SERVER =============
 
 const PORT = process.env.PORT || 5000;
+
+// Create admin user on startup
+async function initializeAdmin() {
+    try {
+        const adminExists = await Admin.findOne({ username: 'admin' });
+        
+        if (!adminExists) {
+            const hashedPassword = await bcrypt.hash('admin123', 10);
+            const admin = new Admin({
+                name: 'System Administrator',
+                username: 'admin',
+                email: 'admin@bluewave.com',
+                password: hashedPassword,
+                isAdmin: true
+            });
+            
+            await admin.save();
+            console.log('✅ Default admin created - Username: admin, Password: admin123');
+        } else {
+            console.log('✅ Admin user exists');
+        }
+    } catch (error) {
+        console.error('❌ Error creating admin:', error);
+    }
+}
+
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-    console.log(`Access your app at: http://localhost:${PORT}`);
+    console.log(`\n🚀 Server running on http://0.0.0.0:${PORT}`);
+    console.log(`📱 Public tracking: http://localhost:${PORT}`);
+    console.log(`🔑 Admin panel: http://localhost:${PORT}/admin`);
+    initializeAdmin();
 });
