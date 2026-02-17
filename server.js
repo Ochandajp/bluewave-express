@@ -46,7 +46,7 @@ const userSchema = new mongoose.Schema({
 
 const User = mongoose.model('User', userSchema);
 
-// Task Schema (keep existing)
+// Task Schema
 const taskSchema = new mongoose.Schema({
     title: { type: String, required: true },
     description: { type: String, required: true },
@@ -147,7 +147,7 @@ app.get('/admin-login', (req, res) => {
 });
 
 app.get('/admin-dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin-dashboard.html'));
+    res.sendFile(path.join(__dirname, 'admin-login.html'));
 });
 
 // ============= AUTH ROUTES =============
@@ -221,9 +221,9 @@ app.post('/api/login', async (req, res) => {
 // Create shipment (admin only)
 app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
     try {
-        console.log('Received shipment data:', req.body); // Debug log
+        console.log('Received shipment data:', req.body);
         
-        const shipmentData = req.body;
+        const shipmentData = { ...req.body };
         
         // Generate 9-digit tracking number if not provided
         if (!shipmentData.trackingNumber) {
@@ -247,21 +247,26 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             }
         }
 
+        // Clean up empty values
+        Object.keys(shipmentData).forEach(key => {
+            if (shipmentData[key] === '' || shipmentData[key] === null || shipmentData[key] === undefined) {
+                delete shipmentData[key];
+            }
+        });
+
         // Add initial tracking history
-        if (!shipmentData.trackingHistory || shipmentData.trackingHistory.length === 0) {
-            shipmentData.trackingHistory = [{
-                status: shipmentData.status || 'pending',
-                location: shipmentData.origin,
-                message: 'Shipment created',
-                timestamp: new Date(),
-                updatedBy: shipmentData.updatedBy || 'Admin'
-            }];
-        }
+        shipmentData.trackingHistory = [{
+            status: shipmentData.status || 'pending',
+            location: shipmentData.origin || 'Origin',
+            message: 'Shipment created',
+            timestamp: new Date(),
+            updatedBy: shipmentData.updatedBy || 'Admin'
+        }];
 
         const shipment = new Shipment(shipmentData);
         await shipment.save();
 
-        console.log('Shipment created successfully:', shipment.trackingNumber); // Debug log
+        console.log('Shipment created successfully:', shipment.trackingNumber);
 
         res.status(201).json({ 
             message: 'Shipment created successfully', 
@@ -288,18 +293,18 @@ app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
 // Public tracking - NO AUTH REQUIRED
 app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
     try {
-        console.log('Tracking search for:', req.params.trackingNumber); // Debug log
+        console.log('Tracking search for:', req.params.trackingNumber);
         
         const shipment = await Shipment.findOne({ 
             trackingNumber: req.params.trackingNumber 
         });
 
         if (!shipment) {
-            console.log('Shipment not found'); // Debug log
+            console.log('Shipment not found');
             return res.status(404).json({ message: 'Shipment not found' });
         }
 
-        console.log('Shipment found:', shipment.trackingNumber); // Debug log
+        console.log('Shipment found:', shipment.trackingNumber);
         res.status(200).json(shipment);
     } catch (error) {
         console.error('Error tracking shipment:', error);
@@ -372,7 +377,7 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
     try {
         const totalShipments = await Shipment.countDocuments();
         const activeShipments = await Shipment.countDocuments({ 
-            status: { $in: ['processing', 'in transit', 'out for delivery'] }
+            status: { $in: ['pending', 'on hold', 'out for delivery'] }
         });
         const deliveredShipments = await Shipment.countDocuments({ status: 'delivered' });
         const pendingShipments = await Shipment.countDocuments({ status: 'pending' });
