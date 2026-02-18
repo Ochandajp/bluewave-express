@@ -1205,11 +1205,162 @@
 
     <script>
         // ============= CONFIGURATION =============
-        const API_URL = 'https://bluewave-express-cargo.onrender.com';
+        const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://bluewave-express-cargo.onrender.com';
 
         // ============= GLOBAL VARIABLES =============
         let currentShipmentId = null;
         let currentViewShipmentId = null;
+
+        // ============= FORMAT FREIGHT COST - FIXED =============
+        function formatFreightCost(cost) {
+            // Handle undefined, null, or empty values
+            if (cost === undefined || cost === null || cost === '') {
+                return '£0.00';
+            }
+            
+            // Convert to number if it's a string
+            const numCost = typeof cost === 'string' ? parseFloat(cost) : cost;
+            
+            // Check if it's a valid number
+            if (isNaN(numCost)) {
+                return '£0.00';
+            }
+            
+            // Format with 2 decimal places
+            return '£' + numCost.toFixed(2);
+        }
+
+        // ============= GET FREIGHT COST CLASS - FIXED =============
+        function getFreightCostClass(cost) {
+            // Handle undefined, null, or empty values
+            if (cost === undefined || cost === null || cost === '') {
+                return 'freight-cost-zero';
+            }
+            
+            // Convert to number if it's a string
+            const numCost = typeof cost === 'string' ? parseFloat(cost) : cost;
+            
+            // Check if it's zero or invalid
+            if (isNaN(numCost) || numCost === 0) {
+                return 'freight-cost-zero';
+            }
+            
+            return 'freight-cost';
+        }
+
+        // ============= SHOW FREIGHT COST MODAL - FIXED =============
+        function showFreightCostModal(shipmentId, currentCost) {
+            console.log('💰 Opening freight cost modal for shipment:', shipmentId);
+            console.log('💰 Current cost value:', currentCost);
+            
+            currentShipmentId = shipmentId;
+            
+            // Parse the current cost correctly
+            let costValue = 0;
+            if (currentCost !== undefined && currentCost !== null) {
+                // Remove any £ symbol and parse
+                const cleanCost = String(currentCost).replace('£', '').trim();
+                costValue = parseFloat(cleanCost) || 0;
+            }
+            
+            console.log('💰 Setting input value to:', costValue.toFixed(2));
+            
+            document.getElementById('freightCostInput').value = costValue.toFixed(2);
+            document.getElementById('freightError').classList.remove('active');
+            document.getElementById('freightCostModal').classList.add('active');
+        }
+
+        function showFreightCostModalFromView() {
+            if (currentViewShipmentId) {
+                const costElement = document.querySelector('#viewShipmentDetails .freight-cost, #viewShipmentDetails .freight-cost-zero');
+                let currentCost = '0';
+                if (costElement) {
+                    const costText = costElement.textContent;
+                    currentCost = costText.replace('£', '');
+                }
+                showFreightCostModal(currentViewShipmentId, currentCost);
+            }
+        }
+
+        function closeFreightCostModal() {
+            document.getElementById('freightCostModal').classList.remove('active');
+            document.getElementById('freightCostInput').value = '0.00';
+            currentShipmentId = null;
+        }
+
+        // ============= SUBMIT FREIGHT COST - FIXED =============
+        async function submitFreightCost() {
+            const freightCost = parseFloat(document.getElementById('freightCostInput').value);
+            const errorEl = document.getElementById('freightError');
+
+            console.log('💰 Submitting freight cost update:', freightCost);
+            console.log('📦 Current shipment ID:', currentShipmentId);
+
+            errorEl.classList.remove('active');
+
+            // Validate input
+            if (isNaN(freightCost) || freightCost < 0) {
+                errorEl.textContent = 'Please enter a valid freight cost';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            if (!currentShipmentId) {
+                errorEl.textContent = 'Shipment ID not found';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const token = localStorage.getItem('token');
+                const url = `${API_URL}/api/admin/shipments/${currentShipmentId}/freight`;
+                
+                console.log('🌐 Making request to:', url);
+                console.log('📤 Sending data:', { freightCost });
+
+                const response = await fetch(url, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ freightCost })
+                });
+
+                console.log('📥 Response status:', response.status);
+
+                const data = await response.json();
+                console.log('📥 Response data:', data);
+
+                if (response.ok && data.success) {
+                    showSuccess(`Freight cost updated to £${freightCost.toFixed(2)}`);
+                    closeFreightCostModal();
+                    
+                    // Refresh data
+                    console.log('🔄 Refreshing shipments...');
+                    await loadShipments();
+                    
+                    // Update view modal if open
+                    if (document.getElementById('viewShipmentModal').classList.contains('active') && 
+                        currentViewShipmentId === currentShipmentId) {
+                        console.log('🔄 Refreshing view modal...');
+                        await viewShipment(currentShipmentId);
+                    }
+                } else {
+                    console.error('❌ Update failed:', data);
+                    errorEl.textContent = data.message || 'Failed to update freight cost';
+                    errorEl.classList.add('active');
+                }
+            } catch (error) {
+                console.error('❌ Network error:', error);
+                errorEl.textContent = 'Network error: ' + error.message;
+                errorEl.classList.add('active');
+            } finally {
+                setLoading(false);
+            }
+        }
 
         // ============= CHARACTER COUNTERS =============
         document.addEventListener('DOMContentLoaded', function() {
@@ -1293,56 +1444,6 @@
         function closeRemarkModal() {
             document.getElementById('addRemarkModal').classList.remove('active');
             currentShipmentId = null;
-        }
-
-        // ============= FREIGHT COST MODAL FUNCTIONS =============
-        function showFreightCostModal(shipmentId, currentCost) {
-            currentShipmentId = shipmentId;
-            
-            // Parse the current cost correctly
-            let costValue = '0.00';
-            if (currentCost) {
-                // Remove any £ symbol and parse
-                const cleanCost = String(currentCost).replace('£', '').trim();
-                costValue = parseFloat(cleanCost) || 0;
-            }
-            
-            document.getElementById('freightCostInput').value = costValue.toFixed(2);
-            document.getElementById('freightError').classList.remove('active');
-            document.getElementById('freightCostModal').classList.add('active');
-        }
-
-        function showFreightCostModalFromView() {
-            if (currentViewShipmentId) {
-                const costElement = document.querySelector('#viewShipmentDetails .freight-cost, #viewShipmentDetails .freight-cost-zero');
-                let currentCost = '0.00';
-                if (costElement) {
-                    const costText = costElement.textContent;
-                    currentCost = costText.replace('£', '');
-                }
-                showFreightCostModal(currentViewShipmentId, currentCost);
-            }
-        }
-
-        function closeFreightCostModal() {
-            document.getElementById('freightCostModal').classList.remove('active');
-            document.getElementById('freightCostInput').value = '0.00';
-            currentShipmentId = null;
-        }
-
-        // ============= FORMAT FREIGHT COST =============
-        function formatFreightCost(cost) {
-            if (cost === undefined || cost === null) return '£0.00';
-            const numCost = parseFloat(cost);
-            if (isNaN(numCost)) return '£0.00';
-            return '£' + numCost.toFixed(2);
-        }
-
-        // ============= GET FREIGHT COST CLASS =============
-        function getFreightCostClass(cost) {
-            const numCost = parseFloat(cost);
-            if (isNaN(numCost) || numCost === 0) return 'freight-cost-zero';
-            return 'freight-cost';
         }
 
         // ============= GET PAYMENT MODE CLASS =============
@@ -1645,7 +1746,7 @@
                             <button class="action-btn btn-view" onclick="viewShipment('${s._id}')">View</button>
                             <button class="action-btn btn-track" onclick="showUpdateStatusModal('${s._id}', '${s.status || 'pending'}')">Status</button>
                             <button class="action-btn btn-remark" onclick="showAddRemarkModal('${s._id}')">Remark</button>
-                            <button class="action-btn btn-cost" onclick="showFreightCostModal('${s._id}', '${s.freightCost || '0.00'}')">Cost</button>
+                            <button class="action-btn btn-cost" onclick="showFreightCostModal('${s._id}', ${s.freightCost})">Cost</button>
                             <button class="action-btn btn-delete" onclick="deleteShipment('${s._id}')">Delete</button>
                         </td>
                     </tr>
@@ -1882,65 +1983,6 @@
                 }
             } catch (error) {
                 console.error('Error adding remark:', error);
-                errorEl.textContent = 'Network error';
-                errorEl.classList.add('active');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // ============= SUBMIT FREIGHT COST =============
-        async function submitFreightCost() {
-            const freightCost = parseFloat(document.getElementById('freightCostInput').value);
-            const errorEl = document.getElementById('freightError');
-
-            errorEl.classList.remove('active');
-
-            if (isNaN(freightCost) || freightCost < 0) {
-                errorEl.textContent = 'Please enter a valid freight cost';
-                errorEl.classList.add('active');
-                return;
-            }
-
-            if (!currentShipmentId) {
-                errorEl.textContent = 'Shipment ID not found';
-                errorEl.classList.add('active');
-                return;
-            }
-
-            setLoading(true);
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/api/admin/shipments/${currentShipmentId}/freight`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ freightCost })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    showSuccess(`Freight cost updated to £${freightCost.toFixed(2)}`);
-                    closeFreightCostModal();
-                    
-                    // Refresh data
-                    await loadShipments();
-                    
-                    // Update view modal if open
-                    if (document.getElementById('viewShipmentModal').classList.contains('active') && 
-                        currentViewShipmentId === currentShipmentId) {
-                        await viewShipment(currentShipmentId);
-                    }
-                } else {
-                    errorEl.textContent = data.message || 'Failed to update freight cost';
-                    errorEl.classList.add('active');
-                }
-            } catch (error) {
-                console.error('Error updating freight cost:', error);
                 errorEl.textContent = 'Network error';
                 errorEl.classList.add('active');
             } finally {
