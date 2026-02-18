@@ -289,6 +289,21 @@
         .history-timeline {
             max-height: 300px;
             overflow-y: auto;
+            padding-right: 1rem;
+        }
+
+        .history-timeline::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .history-timeline::-webkit-scrollbar-track {
+            background: rgba(0, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .history-timeline::-webkit-scrollbar-thumb {
+            background: linear-gradient(#00ffff, #ff00ff);
+            border-radius: 10px;
         }
 
         .history-item {
@@ -300,6 +315,8 @@
             position: relative;
             margin-bottom: 1rem;
             background: rgba(255, 255, 255, 0.02);
+            border-radius: 0 10px 10px 0;
+            align-items: center;
         }
 
         .history-item::before {
@@ -312,7 +329,13 @@
             left: -6px;
             top: 50%;
             transform: translateY(-50%);
+            box-shadow: 0 0 10px #00ffff;
         }
+
+        .history-date { color: #00ffff; font-weight: bold; }
+        .history-status { color: #ff00ff; font-weight: bold; }
+        .history-location { color: #ffffff; }
+        .history-updated { color: #888888; font-size: 0.9rem; }
 
         .footer {
             background: #000814;
@@ -401,6 +424,11 @@
             }
             .history-item {
                 grid-template-columns: 1fr;
+                gap: 0.3rem;
+                padding-left: 1.5rem;
+            }
+            .hero h1 {
+                font-size: 2.5rem;
             }
         }
     </style>
@@ -473,8 +501,9 @@
     </footer>
 
     <script>
-        // Use the Render.com URL for API calls
-        const API_URL = 'https://bluewave-express-cargo.onrender.com';
+        // Use your Render.com URL or localhost for development
+        const API_URL = window.location.origin; // This will work on Render
+        // For local testing, you can use: const API_URL = 'http://localhost:5000';
 
         async function trackShipment() {
             const trackingNumber = document.getElementById('trackingNumber').value.trim();
@@ -501,17 +530,13 @@
 
             try {
                 const response = await fetch(`${API_URL}/api/shipments/track/${trackingNumber}`);
-                
-                if (!response.ok) {
-                    throw new Error('Shipment not found');
-                }
-
                 const data = await response.json();
-                if (data.success) {
+
+                if (response.ok && data.success) {
                     displayShipmentDetails(data.shipment);
                     resultDiv.classList.add('active');
                 } else {
-                    throw new Error('Shipment not found');
+                    throw new Error(data.message || 'Shipment not found');
                 }
             } catch (error) {
                 errorElement.textContent = 'Tracking number not found. Please check and try again.';
@@ -537,8 +562,13 @@
 
             let historyHtml = '';
             if (shipment.trackingHistory && shipment.trackingHistory.length > 0) {
-                shipment.trackingHistory.reverse().forEach(history => {
-                    const date = new Date(history.timestamp).toLocaleString();
+                // Sort history by date (newest first)
+                const sortedHistory = [...shipment.trackingHistory].sort((a, b) => 
+                    new Date(b.timestamp) - new Date(a.timestamp)
+                );
+                
+                sortedHistory.forEach(history => {
+                    const date = history.timestamp ? new Date(history.timestamp).toLocaleString() : 'N/A';
                     historyHtml += `
                         <div class="history-item">
                             <span class="history-date">${date}</span>
@@ -623,7 +653,7 @@
                 <div class="history-section">
                     <h3 style="color: #00ffff; margin-bottom: 1rem;">Tracking History</h3>
                     <div class="history-timeline">
-                        ${historyHtml || '<p style="color: #888;">No history available</p>'}
+                        ${historyHtml || '<p style="color: #888; text-align: center;">No tracking history available</p>'}
                     </div>
                 </div>
             `;

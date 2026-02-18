@@ -10,7 +10,7 @@
             padding: 0;
             box-sizing: border-box;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
+        }                                                                                                                
 
         body {
             background-color: #0a0a0a;
@@ -913,12 +913,12 @@
         // Check if user is logged in
         function checkAuth() {
             const token = localStorage.getItem('token');
-            const admin = JSON.parse(localStorage.getItem('admin') || '{}');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
             
-            if (token && admin && admin.id) {
+            if (token && user && user.role === 'admin') {
                 document.getElementById('loginSection').style.display = 'none';
                 document.getElementById('dashboardSection').style.display = 'block';
-                document.getElementById('adminName').textContent = admin.name || 'Admin';
+                document.getElementById('adminName').textContent = user.name || 'Admin';
                 loadDashboard();
             } else {
                 document.getElementById('loginSection').style.display = 'flex';
@@ -951,12 +951,12 @@
                 }
             } catch (error) {
                 console.error('Setup error:', error);
-                errorEl.textContent = 'Cannot connect to server';
+                errorEl.textContent = 'Cannot connect to server. Please check if the server is running.';
                 errorEl.classList.add('active');
             }
         }
 
-        // Admin login
+        // Admin login - Updated to use /api/login endpoint
         async function adminLogin() {
             const username = document.getElementById('loginUsername').value.trim();
             const password = document.getElementById('loginPassword').value.trim();
@@ -971,19 +971,9 @@
             }
 
             try {
-                console.log('Connecting to:', API_URL);
+                console.log('Attempting login to:', `${API_URL}/api/login`);
                 
-                // First test if API is reachable
-                const testResponse = await fetch(`${API_URL}/api/test`);
-                const testData = await testResponse.json();
-                console.log('API Test:', testData);
-
-                if (!testData.success) {
-                    throw new Error('API not responding properly');
-                }
-
-                // Now try login
-                const response = await fetch(`${API_URL}/api/admin/login`, {
+                const response = await fetch(`${API_URL}/api/login`, {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
@@ -996,23 +986,31 @@
                 console.log('Login response:', data);
 
                 if (response.ok && data.success) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('admin', JSON.stringify(data.admin));
-                    checkAuth();
+                    // Check if user is admin
+                    if (data.user && data.user.role === 'admin') {
+                        localStorage.setItem('token', data.token);
+                        localStorage.setItem('user', JSON.stringify(data.user));
+                        checkAuth();
+                    } else {
+                        errorEl.textContent = 'Access denied. Admin privileges required.';
+                        errorEl.classList.add('active');
+                    }
                 } else {
-                    errorEl.textContent = data.message || 'Login failed';
+                    errorEl.textContent = data.message || 'Login failed. Please check your credentials.';
                     errorEl.classList.add('active');
                 }
             } catch (error) {
                 console.error('Login error:', error);
                 errorEl.innerHTML = `
                     <div style="text-align: left;">
-                        <p>❌ Cannot connect to server</p>
-                        <p>🔍 Check:</p>
-                        <p>1. <a href="${API_URL}/api/test" target="_blank">Test API</a></p>
-                        <p>2. <a href="${API_URL}/api/setup-admin" target="_blank">Setup Admin</a></p>
-                        <p>3. <a href="${API_URL}/admin" target="_blank">Admin Page</a></p>
-                        <p>Error: ${error.message}</p>
+                        <p style="color: #ff4444;">❌ Connection Error</p>
+                        <p style="font-size: 0.9rem; color: #fff;">Unable to connect to server. Please try:</p>
+                        <ol style="text-align: left; color: #fff; font-size: 0.9rem; margin-top: 0.5rem;">
+                            <li>Check if the server is running at <a href="${API_URL}" target="_blank" style="color: #00ffff;">${API_URL}</a></li>
+                            <li>Verify your internet connection</li>
+                            <li>Try again in a few moments</li>
+                        </ol>
+                        <p style="color: #888; margin-top: 0.5rem;">Error details: ${error.message}</p>
                     </div>
                 `;
                 errorEl.classList.add('active');
@@ -1022,7 +1020,7 @@
         // Logout
         function logout() {
             localStorage.removeItem('token');
-            localStorage.removeItem('admin');
+            localStorage.removeItem('user');
             checkAuth();
         }
 
