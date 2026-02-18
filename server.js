@@ -42,8 +42,8 @@ const userSchema = new mongoose.Schema({
     email: { type: String, unique: true, required: true },
     phone: String,
     password: { type: String, required: true },
-    isAdmin: { type: Boolean, default: false },
-    accountType: { type: String, enum: ['user', 'admin'], default: 'user' },
+    isAdmin: { type: Boolean, default: true }, // Changed to true by default
+    accountType: { type: String, enum: ['user', 'admin'], default: 'admin' }, // Changed to admin by default
     createdAt: { type: Date, default: Date.now },
     lastLogin: Date,
     status: { type: String, enum: ['active', 'inactive'], default: 'active' }
@@ -64,7 +64,7 @@ const shipmentSchema = new mongoose.Schema({
     product: String,
     quantity: Number,
     pieceType: String,
-    description: String,
+    description: { type: String, default: '' },
     length: Number,
     width: Number,
     height: Number,
@@ -78,7 +78,7 @@ const shipmentSchema = new mongoose.Schema({
         enum: ['pending', 'on hold', 'out for delivery', 'delivered'],
         default: 'pending'
     },
-    remark: String,
+    remark: { type: String, default: '' },
     updatedBy: String,
     trackingHistory: [{
         status: String,
@@ -177,19 +177,21 @@ app.post('/api/register', async (req, res) => {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Create user with admin privileges by default
         const user = new User({
             name,
             username,
             email,
             phone: phone || '',
             password: hashedPassword,
-            isAdmin: false,
-            accountType: 'user',
+            isAdmin: true, // Set to true for admin access
+            accountType: 'admin', // Set to admin
             status: 'active'
         });
 
         await user.save();
 
+        // Generate token and auto-login after registration
         const token = jwt.sign(
             { id: user._id, username: user.username, isAdmin: user.isAdmin }, 
             JWT_SECRET,
@@ -198,7 +200,7 @@ app.post('/api/register', async (req, res) => {
 
         res.status(201).json({ 
             success: true,
-            message: 'User registered successfully', 
+            message: 'Admin registered successfully', 
             token,
             user: {
                 id: user._id,
@@ -207,7 +209,7 @@ app.post('/api/register', async (req, res) => {
                 email: user.email,
                 isAdmin: user.isAdmin,
                 accountType: user.accountType,
-                role: user.isAdmin ? 'admin' : 'user'
+                role: 'admin'
             }
         });
 
@@ -221,7 +223,7 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-// ============= SETUP ADMIN ROUTE =============
+// ============= SETUP ADMIN ROUTE (Optional - for first admin) =============
 
 app.get('/api/setup-admin', async (req, res) => {
     try {
@@ -266,11 +268,7 @@ app.get('/api/setup-admin', async (req, res) => {
             res.json({ 
                 success: true,
                 message: '✅ Admin already exists', 
-                credentials: {
-                    username: 'admin',
-                    password: 'admin123'
-                },
-                note: 'Use these credentials or your existing admin credentials'
+                note: 'You can create new admin accounts through the registration form'
             });
         }
     } catch (error) {
@@ -381,124 +379,6 @@ app.get('/api/user', authenticate, async (req, res) => {
         res.status(500).json({ 
             success: false, 
             message: 'Error fetching user' 
-        });
-    }
-});
-
-// ============= ADMIN USER MANAGEMENT =============
-
-app.get('/api/admin/users', authenticate, isAdmin, async (req, res) => {
-    try {
-        const users = await User.find().select('-password').sort({ createdAt: -1 });
-        res.json({
-            success: true,
-            users
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error fetching users' 
-        });
-    }
-});
-
-app.post('/api/admin/users', authenticate, isAdmin, async (req, res) => {
-    try {
-        const { name, username, email, phone, password, isAdmin, accountType } = req.body;
-
-        const existingUser = await User.findOne({ 
-            $or: [{ email }, { username }] 
-        });
-        
-        if (existingUser) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'User already exists' 
-            });
-        }
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = new User({
-            name,
-            username,
-            email,
-            phone,
-            password: hashedPassword,
-            isAdmin: isAdmin || false,
-            accountType: accountType || 'user',
-            status: 'active'
-        });
-
-        await user.save();
-
-        res.status(201).json({ 
-            success: true,
-            message: 'User created successfully',
-            user: {
-                id: user._id,
-                name: user.name,
-                username: user.username,
-                email: user.email,
-                isAdmin: user.isAdmin,
-                accountType: user.accountType
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error creating user' 
-        });
-    }
-});
-
-app.put('/api/admin/users/:id', authenticate, isAdmin, async (req, res) => {
-    try {
-        const { name, email, phone, isAdmin, accountType, status } = req.body;
-        
-        const user = await User.findByIdAndUpdate(
-            req.params.id,
-            { name, email, phone, isAdmin, accountType, status },
-            { new: true }
-        ).select('-password');
-
-        if (!user) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'User not found' 
-            });
-        }
-
-        res.json({ 
-            success: true,
-            message: 'User updated successfully',
-            user
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error updating user' 
-        });
-    }
-});
-
-app.delete('/api/admin/users/:id', authenticate, isAdmin, async (req, res) => {
-    try {
-        const user = await User.findByIdAndDelete(req.params.id);
-        if (!user) {
-            return res.status(404).json({ 
-                success: false, 
-                message: 'User not found' 
-            });
-        }
-        res.json({ 
-            success: true,
-            message: 'User deleted successfully' 
-        });
-    } catch (error) {
-        res.status(500).json({ 
-            success: false, 
-            message: 'Error deleting user' 
         });
     }
 });
@@ -712,23 +592,6 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
             message: 'Error fetching stats' 
         });
     }
-});
-
-// ============= LIST ALL ROUTES =============
-app.get('/api/routes', (req, res) => {
-    const routes = [];
-    app._router.stack.forEach(middleware => {
-        if (middleware.route) {
-            routes.push({
-                path: middleware.route.path,
-                method: Object.keys(middleware.route.methods)[0].toUpperCase()
-            });
-        }
-    });
-    res.json({
-        success: true,
-        routes: routes
-    });
 });
 
 // ============= ERROR HANDLING =============

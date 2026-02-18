@@ -251,6 +251,11 @@
             min-width: 150px;
         }
 
+        .filter-select option {
+            background: #001824;
+            color: #ffffff;
+        }
+
         .table-container {
             background: rgba(255, 255, 255, 0.02);
             border-radius: 20px;
@@ -356,7 +361,9 @@
             font-size: 0.9rem;
         }
 
-        .form-group input {
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
             width: 100%;
             padding: 1rem;
             background: rgba(255, 255, 255, 0.05);
@@ -365,9 +372,26 @@
             color: #ffffff;
             font-size: 1rem;
             transition: all 0.3s;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        .form-group input:focus {
+        .form-group select {
+            cursor: pointer;
+        }
+
+        .form-group select option {
+            background: #001824;
+            color: #ffffff;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
             outline: none;
             border-color: #00ffff;
             box-shadow: 0 0 20px #00ffff33;
@@ -502,7 +526,7 @@
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
@@ -512,6 +536,7 @@
             border-radius: 20px;
             padding: 1.8rem;
             border: 1px solid #00ffff33;
+            margin-bottom: 1.5rem;
         }
 
         .form-section h3 {
@@ -526,6 +551,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 1rem;
+            margin-top: 1rem;
         }
 
         .btn-submit {
@@ -591,6 +617,14 @@
             text-decoration: underline;
         }
 
+        #registerModal .modal-content {
+            max-width: 500px;
+        }
+
+        #registerModal .form-group {
+            margin-bottom: 1.5rem;
+        }
+
         @media (max-width: 768px) {
             .dashboard-container {
                 flex-direction: column;
@@ -602,6 +636,10 @@
             
             .history-item {
                 grid-template-columns: 1fr;
+            }
+
+            .form-grid textarea {
+                grid-column: span 1;
             }
         }
     </style>
@@ -629,7 +667,7 @@
 
     <!-- Register Modal -->
     <div class="modal" id="registerModal">
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content">
             <div class="modal-header">
                 <h2>Create Admin Account</h2>
                 <span class="close-modal" onclick="closeRegisterModal()">&times;</span>
@@ -879,9 +917,9 @@
                                         <label>Quantity</label>
                                         <input type="number" id="quantity" placeholder="Number of items">
                                     </div>
-                                    <div class="form-group">
+                                    <div class="form-group" style="grid-column: span 2;">
                                         <label>Description</label>
-                                        <textarea id="description" rows="2" placeholder="Package contents description"></textarea>
+                                        <textarea id="description" rows="3" placeholder="Package contents description"></textarea>
                                     </div>
                                 </div>
                                 
@@ -1010,12 +1048,11 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
+                    // Auto login after successful registration
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(data.user));
                     closeRegisterModal();
-                    document.getElementById('loginUsername').value = username;
-                    document.getElementById('loginPassword').value = password;
-                    document.getElementById('loginError').style.color = '#00ff00';
-                    document.getElementById('loginError').textContent = 'Account created successfully! Please login.';
-                    document.getElementById('loginError').classList.add('active');
+                    checkAuth();
                 } else {
                     errorEl.textContent = data.message || 'Registration failed';
                     errorEl.classList.add('active');
