@@ -291,11 +291,13 @@ app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
 
-// ============= AUTH ROUTES =============
+// ============= FIXED LOGIN ROUTE =============
 
 app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
+
+        console.log('Login attempt for username:', username);
 
         if (!username || !password) {
             return res.status(400).json({ 
@@ -304,25 +306,38 @@ app.post('/api/login', async (req, res) => {
             });
         }
 
+        // Find user by username OR email
         const user = await User.findOne({ 
-            $or: [{ username }, { email: username }] 
+            $or: [
+                { username: username }, 
+                { email: username }
+            ] 
         });
         
         if (!user) {
+            console.log('User not found:', username);
             return res.status(401).json({ 
                 success: false, 
                 message: 'Invalid credentials' 
             });
         }
 
+        console.log('User found:', user.username);
+
+        // Compare password
         const isPasswordValid = await bcrypt.compare(password, user.password);
+        
         if (!isPasswordValid) {
+            console.log('Invalid password for user:', username);
             return res.status(401).json({ 
                 success: false, 
                 message: 'Invalid credentials' 
             });
         }
 
+        console.log('Password valid for user:', username);
+
+        // Check if account is active
         if (user.status === 'inactive') {
             return res.status(403).json({ 
                 success: false, 
@@ -330,15 +345,24 @@ app.post('/api/login', async (req, res) => {
             });
         }
 
+        // Update last login
         user.lastLogin = new Date();
         await user.save();
 
+        // Generate token
         const token = jwt.sign(
-            { id: user._id, username: user.username, isAdmin: user.isAdmin }, 
+            { 
+                id: user._id, 
+                username: user.username, 
+                isAdmin: user.isAdmin 
+            }, 
             JWT_SECRET,
             { expiresIn: '7d' }
         );
 
+        console.log('Login successful for user:', username);
+
+        // Send response
         res.json({ 
             success: true,
             message: 'Login successful', 
@@ -353,14 +377,17 @@ app.post('/api/login', async (req, res) => {
                 role: user.isAdmin ? 'admin' : 'user'
             }
         });
+
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ 
             success: false, 
-            message: 'Server error' 
+            message: 'Server error occurred during login' 
         });
     }
 });
+
+// ============= USER PROFILE ROUTE =============
 
 app.get('/api/user', authenticate, async (req, res) => {
     try {
