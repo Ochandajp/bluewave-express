@@ -181,6 +181,24 @@
             box-shadow: 0 0 20px #00ffff;
         }
 
+        .btn-warning {
+            padding: 0.8rem 2rem;
+            background: transparent;
+            border: 2px solid #ffa500;
+            border-radius: 50px;
+            color: #ffa500;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+
+        .btn-warning:hover {
+            background: #ffa500;
+            color: #000814;
+            box-shadow: 0 0 20px #ffa500;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -301,9 +319,35 @@
         .status-outfordelivery { background: #00ffff33; color: #00ffff; border: 1px solid #00ffff; }
         .status-delivered { background: #00ff0033; color: #00ff00; border: 1px solid #00ff00; }
 
+        .freight-cost {
+            color: #00ff00;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        .freight-cost-zero {
+            color: #ffa500;
+            font-weight: bold;
+        }
+
+        .payment-mode {
+            padding: 0.3rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .payment-cash { background: #00ff0033; color: #00ff00; border: 1px solid #00ff00; }
+        .payment-bank { background: #00ffff33; color: #00ffff; border: 1px solid #00ffff; }
+        .payment-card { background: #ff00ff33; color: #ff00ff; border: 1px solid #ff00ff; }
+        .payment-mobile { background: #ffa50033; color: #ffa500; border: 1px solid #ffa500; }
+        .payment-freight { background: #ff444433; color: #ff4444; border: 1px solid #ff4444; }
+
         .action-buttons {
             display: flex;
             gap: 0.5rem;
+            flex-wrap: wrap;
         }
 
         .action-btn {
@@ -319,6 +363,8 @@
         .btn-edit { background: #ff00ff33; color: #ff00ff; }
         .btn-delete { background: #ff444433; color: #ff4444; }
         .btn-track { background: #00ff0033; color: #00ff00; }
+        .btn-remark { background: #ffa50033; color: #ffa500; }
+        .btn-cost { background: #00ff0033; color: #00ff00; }
 
         .action-btn:hover {
             transform: translateY(-2px);
@@ -505,6 +551,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         .modal-header h2 {
@@ -574,31 +622,56 @@
         }
 
         .history-timeline {
-            max-height: 300px;
+            max-height: 500px;
             overflow-y: auto;
+            padding-right: 1rem;
+        }
+
+        .history-timeline::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .history-timeline::-webkit-scrollbar-track {
+            background: rgba(0, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .history-timeline::-webkit-scrollbar-thumb {
+            background: linear-gradient(#00ffff, #ff00ff);
+            border-radius: 10px;
         }
 
         .history-item {
-            display: grid;
-            grid-template-columns: 180px 120px 1fr 150px;
-            gap: 1rem;
-            padding: 1rem;
-            border-left: 2px solid #00ffff33;
+            padding: 1.2rem;
+            border-left: 3px solid #00ffff;
             position: relative;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             background: rgba(255, 255, 255, 0.02);
+            border-radius: 0 10px 10px 0;
         }
 
         .history-item::before {
             content: '';
-            width: 10px;
-            height: 10px;
+            width: 12px;
+            height: 12px;
             background: #00ffff;
             border-radius: 50%;
             position: absolute;
-            left: -6px;
-            top: 50%;
-            transform: translateY(-50%);
+            left: -7px;
+            top: 20px;
+            box-shadow: 0 0 15px #00ffff;
+        }
+
+        .history-date { color: #00ffff; font-weight: bold; display: block; margin-bottom: 0.5rem; }
+        .history-status { color: #ff00ff; font-weight: bold; }
+        .history-location { color: #ffffff; }
+        .history-remark { 
+            margin-top: 0.8rem; 
+            padding: 1rem; 
+            background: rgba(255, 165, 0, 0.15); 
+            border-left: 4px solid #ffa500; 
+            border-radius: 5px;
+            color: #ffa500;
         }
 
         .register-link {
@@ -621,8 +694,28 @@
             max-width: 500px;
         }
 
-        #registerModal .form-group {
-            margin-bottom: 1.5rem;
+        .required-field::after {
+            content: " *";
+            color: #ff4444;
+            font-weight: bold;
+        }
+
+        .remark-count {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.3rem;
+        }
+
+        .amount-input {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .amount-input span {
+            color: #00ffff;
+            font-size: 1.2rem;
+            font-weight: bold;
         }
 
         @media (max-width: 768px) {
@@ -700,7 +793,86 @@
         </div>
     </div>
 
-    <!-- Dashboard Section (Hidden by default) -->
+    <!-- Update Status Modal -->
+    <div class="modal" id="updateStatusModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Update Shipment Status</h2>
+                <span class="close-modal" onclick="closeStatusModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label class="required-field">New Status</label>
+                <select id="updateStatus" class="form-control">
+                    <option value="pending">Pending</option>
+                    <option value="on hold">On Hold</option>
+                    <option value="out for delivery">Out for Delivery</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="updateLocation" placeholder="Current location">
+            </div>
+            <div class="form-group">
+                <label>Message</label>
+                <input type="text" id="updateMessage" placeholder="Brief update message">
+            </div>
+            <div class="form-group">
+                <label class="required-field">Remarks</label>
+                <textarea id="updateRemark" rows="5" placeholder="Enter detailed remarks..." required></textarea>
+                <div class="remark-count" id="remarkCount">0 characters</div>
+            </div>
+            <button class="btn-submit" onclick="submitStatusUpdate()">Update Status</button>
+            <div class="error-message" id="statusError"></div>
+        </div>
+    </div>
+
+    <!-- Add Remark Only Modal -->
+    <div class="modal" id="addRemarkModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Add Tracking Remark</h2>
+                <span class="close-modal" onclick="closeRemarkModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="remarkLocation" placeholder="Current location">
+            </div>
+            <div class="form-group">
+                <label>Message</label>
+                <input type="text" id="remarkMessage" placeholder="Brief message">
+            </div>
+            <div class="form-group">
+                <label class="required-field">Remarks</label>
+                <textarea id="remarkText" rows="5" placeholder="Enter your remarks here..." required></textarea>
+                <div class="remark-count" id="remarkTextCount">0 characters</div>
+            </div>
+            <button class="btn-submit" onclick="submitRemarkOnly()">Add Remark</button>
+            <div class="error-message" id="remarkError"></div>
+        </div>
+    </div>
+
+    <!-- Update Freight Cost Modal -->
+    <div class="modal" id="freightCostModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Update Freight Cost</h2>
+                <span class="close-modal" onclick="closeFreightCostModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label class="required-field">Freight Cost (£)</label>
+                <div class="amount-input">
+                    <span>£</span>
+                    <input type="number" id="freightCostInput" step="0.01" min="0" placeholder="0.00" value="0.00">
+                </div>
+                <small style="color: #888;">Enter the new freight cost amount</small>
+            </div>
+            <button class="btn-submit" onclick="submitFreightCost()">Update Cost</button>
+            <div class="error-message" id="freightError"></div>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
     <div id="dashboardSection" style="display: none;">
         <nav class="navbar">
             <div class="logo">
@@ -776,12 +948,13 @@
                                     <th>Origin</th>
                                     <th>Destination</th>
                                     <th>Status</th>
+                                    <th>Freight Cost</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="recentShipmentsTable">
                                 <tr>
-                                    <td colspan="6" style="text-align: center;">No recent shipments</td>
+                                    <td colspan="7" style="text-align: center;">No recent shipments</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -813,9 +986,9 @@
                                 <tr>
                                     <th>Tracking #</th>
                                     <th>Recipient</th>
-                                    <th>Origin → Destination</th>
+                                    <th>Route</th>
                                     <th>Status</th>
-                                    <th>Created</th>
+                                    <th>Freight Cost</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
@@ -840,30 +1013,57 @@
                             <div class="form-section">
                                 <h3>Tracking Information</h3>
                                 <div class="form-group">
-                                    <label>Tracking Number (9 digits)</label>
+                                    <label>Tracking Number</label>
                                     <input type="text" id="trackingNumber" maxlength="9" pattern="\d{9}" placeholder="Leave empty to auto-generate">
                                     <small style="color: #888;">Leave empty for automatic 9-digit number</small>
                                 </div>
                             </div>
 
-                            <!-- Recipient Information -->
+                            <!-- Shipment Details -->
                             <div class="form-section">
-                                <h3>Recipient Information</h3>
+                                <h3>📦 Shipment Details</h3>
                                 <div class="form-grid">
                                     <div class="form-group">
-                                        <label>Full Name *</label>
-                                        <input type="text" id="recipientName" required placeholder="Enter recipient full name">
+                                        <label>Departure Date</label>
+                                        <input type="date" id="departureDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Pickup Date</label>
+                                        <input type="date" id="pickupDate">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Package Type</label>
+                                        <input type="text" id="packageType" placeholder="e.g., Box, Pallet">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Package Status</label>
+                                        <input type="text" id="packageStatus" placeholder="e.g., Good, Damaged">
+                                    </div>
+                                    <div class="form-group" style="grid-column: span 2;">
+                                        <label class="required-field">Initial Remarks</label>
+                                        <textarea id="comment" rows="4" placeholder="Enter initial remarks..." required></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Recipient Information -->
+                            <div class="form-section">
+                                <h3>👤 Recipient Information</h3>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="required-field">Full Name</label>
+                                        <input type="text" id="recipientName" required placeholder="Enter recipient name">
                                     </div>
                                     <div class="form-group">
                                         <label>Email</label>
                                         <input type="email" id="recipientEmail" placeholder="recipient@email.com">
                                     </div>
                                     <div class="form-group">
-                                        <label>Phone Number *</label>
+                                        <label class="required-field">Phone</label>
                                         <input type="tel" id="recipientPhone" required placeholder="+1234567890">
                                     </div>
                                     <div class="form-group">
-                                        <label>Delivery Address *</label>
+                                        <label class="required-field">Address</label>
                                         <textarea id="deliveryAddress" rows="2" required placeholder="Full delivery address"></textarea>
                                     </div>
                                 </div>
@@ -871,19 +1071,19 @@
 
                             <!-- Shipment Information -->
                             <div class="form-section">
-                                <h3>Shipment Information</h3>
+                                <h3>📍 Shipment Information</h3>
                                 <div class="form-grid">
                                     <div class="form-group">
-                                        <label>Origin *</label>
+                                        <label class="required-field">Origin</label>
                                         <input type="text" id="origin" required placeholder="City, Country">
                                     </div>
                                     <div class="form-group">
-                                        <label>Destination *</label>
+                                        <label class="required-field">Destination</label>
                                         <input type="text" id="destination" required placeholder="City, Country">
                                     </div>
                                     <div class="form-group">
                                         <label>Carrier</label>
-                                        <input type="text" id="carrier" placeholder="e.g., FedEx, DHL, UPS">
+                                        <input type="text" id="carrier" placeholder="e.g., FedEx, DHL">
                                     </div>
                                     <div class="form-group">
                                         <label>Shipment Type</label>
@@ -894,7 +1094,7 @@
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label>Status</label>
+                                        <label>Initial Status</label>
                                         <select id="status">
                                             <option value="pending">Pending</option>
                                             <option value="on hold">On Hold</option>
@@ -907,8 +1107,12 @@
 
                             <!-- Package Details -->
                             <div class="form-section">
-                                <h3>Package Details</h3>
+                                <h3>📋 Package Details</h3>
                                 <div class="form-grid">
+                                    <div class="form-group">
+                                        <label>Piece Type</label>
+                                        <input type="text" id="pieceType" placeholder="e.g., Crate, Drum">
+                                    </div>
                                     <div class="form-group">
                                         <label>Product</label>
                                         <input type="text" id="product" placeholder="Product name">
@@ -919,7 +1123,7 @@
                                     </div>
                                     <div class="form-group" style="grid-column: span 2;">
                                         <label>Description</label>
-                                        <textarea id="description" rows="3" placeholder="Package contents description"></textarea>
+                                        <textarea id="description" rows="3" placeholder="Package description"></textarea>
                                     </div>
                                 </div>
                                 
@@ -944,9 +1148,9 @@
                                 </div>
                             </div>
 
-                            <!-- Payment & Schedule -->
+                            <!-- Payment & Freight -->
                             <div class="form-section">
-                                <h3>Payment & Schedule</h3>
+                                <h3>💳 Payment & Freight</h3>
                                 <div class="form-grid">
                                     <div class="form-group">
                                         <label>Payment Mode</label>
@@ -955,21 +1159,21 @@
                                             <option value="bank transfer">Bank Transfer</option>
                                             <option value="card">Card</option>
                                             <option value="mobile money">Mobile Money</option>
+                                            <option value="freight">Freight Cost (Collect on Delivery)</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label>Expected Delivery Date</label>
+                                        <label class="required-field">Freight Cost (£)</label>
+                                        <div class="amount-input">
+                                            <span>£</span>
+                                            <input type="number" id="createFreightCost" step="0.01" min="0" placeholder="0.00" value="0.00" required>
+                                        </div>
+                                        <small style="color: #888;">Enter the freight cost amount (e.g., 150.00)</small>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Expected Delivery</label>
                                         <input type="date" id="expectedDelivery">
                                     </div>
-                                </div>
-                            </div>
-
-                            <!-- Remarks -->
-                            <div class="form-section">
-                                <h3>Remarks</h3>
-                                <div class="form-group">
-                                    <label>Remark/Comment</label>
-                                    <textarea id="remark" rows="3" placeholder="Any special instructions or remarks"></textarea>
                                 </div>
                             </div>
 
@@ -986,7 +1190,12 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Shipment Details</h2>
-                <span class="close-modal" onclick="closeViewModal()">&times;</span>
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <button class="btn-primary" onclick="showUpdateStatusModalFromView()">Update Status</button>
+                    <button class="btn-warning" onclick="showAddRemarkModalFromView()">Add Remark</button>
+                    <button class="btn-cost" onclick="showFreightCostModalFromView()">Update Cost</button>
+                    <span class="close-modal" onclick="closeViewModal()">&times;</span>
+                </div>
             </div>
             <div id="viewShipmentDetails">
                 <!-- Shipment details will be loaded here -->
@@ -997,6 +1206,27 @@
     <script>
         // ============= CONFIGURATION =============
         const API_URL = 'https://bluewave-express-cargo.onrender.com';
+
+        // ============= GLOBAL VARIABLES =============
+        let currentShipmentId = null;
+        let currentViewShipmentId = null;
+
+        // ============= CHARACTER COUNTERS =============
+        document.addEventListener('DOMContentLoaded', function() {
+            const remarkTextarea = document.getElementById('updateRemark');
+            if (remarkTextarea) {
+                remarkTextarea.addEventListener('input', function() {
+                    document.getElementById('remarkCount').textContent = this.value.length + ' characters';
+                });
+            }
+
+            const remarkOnlyTextarea = document.getElementById('remarkText');
+            if (remarkOnlyTextarea) {
+                remarkOnlyTextarea.addEventListener('input', function() {
+                    document.getElementById('remarkTextCount').textContent = this.value.length + ' characters';
+                });
+            }
+        });
 
         // ============= MODAL FUNCTIONS =============
         function showLoginModal() {
@@ -1016,6 +1246,123 @@
             document.getElementById('regPhone').value = '';
             document.getElementById('regUsername').value = '';
             document.getElementById('regPassword').value = '';
+        }
+
+        // ============= STATUS MODAL FUNCTIONS =============
+        function showUpdateStatusModal(shipmentId, currentStatus) {
+            currentShipmentId = shipmentId;
+            document.getElementById('updateStatus').value = currentStatus || 'pending';
+            document.getElementById('updateLocation').value = '';
+            document.getElementById('updateMessage').value = '';
+            document.getElementById('updateRemark').value = '';
+            document.getElementById('remarkCount').textContent = '0 characters';
+            document.getElementById('statusError').classList.remove('active');
+            document.getElementById('updateStatusModal').classList.add('active');
+        }
+
+        function showUpdateStatusModalFromView() {
+            if (currentViewShipmentId) {
+                const statusElement = document.querySelector('#viewShipmentDetails .status-badge');
+                const currentStatus = statusElement ? statusElement.textContent.toLowerCase() : 'pending';
+                showUpdateStatusModal(currentViewShipmentId, currentStatus);
+            }
+        }
+
+        function closeStatusModal() {
+            document.getElementById('updateStatusModal').classList.remove('active');
+            currentShipmentId = null;
+        }
+
+        // ============= REMARK ONLY MODAL FUNCTIONS =============
+        function showAddRemarkModal(shipmentId) {
+            currentShipmentId = shipmentId;
+            document.getElementById('remarkLocation').value = '';
+            document.getElementById('remarkMessage').value = '';
+            document.getElementById('remarkText').value = '';
+            document.getElementById('remarkTextCount').textContent = '0 characters';
+            document.getElementById('remarkError').classList.remove('active');
+            document.getElementById('addRemarkModal').classList.add('active');
+        }
+
+        function showAddRemarkModalFromView() {
+            if (currentViewShipmentId) {
+                showAddRemarkModal(currentViewShipmentId);
+            }
+        }
+
+        function closeRemarkModal() {
+            document.getElementById('addRemarkModal').classList.remove('active');
+            currentShipmentId = null;
+        }
+
+        // ============= FREIGHT COST MODAL FUNCTIONS =============
+        function showFreightCostModal(shipmentId, currentCost) {
+            currentShipmentId = shipmentId;
+            
+            // Parse the current cost correctly
+            let costValue = '0.00';
+            if (currentCost) {
+                // Remove any £ symbol and parse
+                const cleanCost = String(currentCost).replace('£', '').trim();
+                costValue = parseFloat(cleanCost) || 0;
+            }
+            
+            document.getElementById('freightCostInput').value = costValue.toFixed(2);
+            document.getElementById('freightError').classList.remove('active');
+            document.getElementById('freightCostModal').classList.add('active');
+        }
+
+        function showFreightCostModalFromView() {
+            if (currentViewShipmentId) {
+                const costElement = document.querySelector('#viewShipmentDetails .freight-cost, #viewShipmentDetails .freight-cost-zero');
+                let currentCost = '0.00';
+                if (costElement) {
+                    const costText = costElement.textContent;
+                    currentCost = costText.replace('£', '');
+                }
+                showFreightCostModal(currentViewShipmentId, currentCost);
+            }
+        }
+
+        function closeFreightCostModal() {
+            document.getElementById('freightCostModal').classList.remove('active');
+            document.getElementById('freightCostInput').value = '0.00';
+            currentShipmentId = null;
+        }
+
+        // ============= FORMAT FREIGHT COST =============
+        function formatFreightCost(cost) {
+            if (cost === undefined || cost === null) return '£0.00';
+            const numCost = parseFloat(cost);
+            if (isNaN(numCost)) return '£0.00';
+            return '£' + numCost.toFixed(2);
+        }
+
+        // ============= GET FREIGHT COST CLASS =============
+        function getFreightCostClass(cost) {
+            const numCost = parseFloat(cost);
+            if (isNaN(numCost) || numCost === 0) return 'freight-cost-zero';
+            return 'freight-cost';
+        }
+
+        // ============= GET PAYMENT MODE CLASS =============
+        function getPaymentModeClass(mode) {
+            switch(mode?.toLowerCase()) {
+                case 'cash': return 'payment-cash';
+                case 'bank transfer': return 'payment-bank';
+                case 'card': return 'payment-card';
+                case 'mobile money': return 'payment-mobile';
+                case 'freight': return 'payment-freight';
+                default: return 'payment-cash';
+            }
+        }
+
+        // ============= FORMAT PAYMENT MODE DISPLAY =============
+        function formatPaymentMode(mode) {
+            if (mode?.toLowerCase() === 'freight') {
+                return 'Freight Cost (COD)';
+            }
+            return mode || 'N/A';
         }
 
         // ============= REGISTER FUNCTION =============
@@ -1048,7 +1395,6 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    // Auto login after successful registration
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
                     closeRegisterModal();
@@ -1218,13 +1564,16 @@
             const tbody = document.getElementById('recentShipmentsTable');
             
             if (!shipments || shipments.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No recent shipments</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No recent shipments</td></tr>';
                 return;
             }
 
             let html = '';
             shipments.slice(0, 5).forEach(s => {
                 const statusClass = s.status ? s.status.toLowerCase().replace(/ /g, '') : 'pending';
+                const freightDisplay = formatFreightCost(s.freightCost);
+                const freightClass = getFreightCostClass(s.freightCost);
+                
                 html += `
                     <tr>
                         <td>${s.trackingNumber || 'N/A'}</td>
@@ -1232,6 +1581,7 @@
                         <td>${s.origin || 'N/A'}</td>
                         <td>${s.destination || 'N/A'}</td>
                         <td><span class="status-badge status-${statusClass}">${s.status || 'Pending'}</span></td>
+                        <td class="${freightClass}">${freightDisplay}</td>
                         <td>
                             <button class="action-btn btn-view" onclick="viewShipment('${s._id}')">View</button>
                         </td>
@@ -1281,16 +1631,21 @@
             let html = '';
             shipments.forEach(s => {
                 const statusClass = s.status ? s.status.toLowerCase().replace(/ /g, '') : 'pending';
-                const created = s.createdAt ? new Date(s.createdAt).toLocaleDateString() : 'N/A';
+                const freightDisplay = formatFreightCost(s.freightCost);
+                const freightClass = getFreightCostClass(s.freightCost);
+                
                 html += `
                     <tr>
                         <td>${s.trackingNumber || 'N/A'}</td>
                         <td>${s.recipientName || 'N/A'}</td>
                         <td>${s.origin || 'N/A'} → ${s.destination || 'N/A'}</td>
                         <td><span class="status-badge status-${statusClass}">${s.status || 'Pending'}</span></td>
-                        <td>${created}</td>
-                        <td>
+                        <td class="${freightClass}">${freightDisplay}</td>
+                        <td class="action-buttons">
                             <button class="action-btn btn-view" onclick="viewShipment('${s._id}')">View</button>
+                            <button class="action-btn btn-track" onclick="showUpdateStatusModal('${s._id}', '${s.status || 'pending'}')">Status</button>
+                            <button class="action-btn btn-remark" onclick="showAddRemarkModal('${s._id}')">Remark</button>
+                            <button class="action-btn btn-cost" onclick="showFreightCostModal('${s._id}', '${s.freightCost || '0.00'}')">Cost</button>
                             <button class="action-btn btn-delete" onclick="deleteShipment('${s._id}')">Delete</button>
                         </td>
                     </tr>
@@ -1307,15 +1662,44 @@
 
         // ============= CREATE SHIPMENT =============
         async function createShipment() {
+            const comment = document.getElementById('comment').value;
+            const freightCost = document.getElementById('createFreightCost').value;
+
+            if (!comment || comment.trim() === '') {
+                showError('Initial remarks are required');
+                return;
+            }
+
+            if (!freightCost || freightCost === '') {
+                showError('Freight cost is required');
+                return;
+            }
+
+            const freightCostNum = parseFloat(freightCost);
+            if (isNaN(freightCostNum) || freightCostNum < 0) {
+                showError('Please enter a valid freight cost');
+                return;
+            }
+
             const shipmentData = {
+                departureDate: document.getElementById('departureDate').value || null,
+                pickupDate: document.getElementById('pickupDate').value || null,
+                packageType: document.getElementById('packageType').value,
+                packageStatus: document.getElementById('packageStatus').value,
+                comment: comment,
+                
                 recipientName: document.getElementById('recipientName').value,
                 recipientEmail: document.getElementById('recipientEmail').value,
                 recipientPhone: document.getElementById('recipientPhone').value,
                 deliveryAddress: document.getElementById('deliveryAddress').value,
+                
                 origin: document.getElementById('origin').value,
                 destination: document.getElementById('destination').value,
                 carrier: document.getElementById('carrier').value,
                 shipmentType: document.getElementById('shipmentType').value,
+                status: document.getElementById('status').value,
+                
+                pieceType: document.getElementById('pieceType').value,
                 product: document.getElementById('product').value,
                 quantity: document.getElementById('quantity').value ? parseInt(document.getElementById('quantity').value) : null,
                 description: document.getElementById('description').value,
@@ -1323,11 +1707,13 @@
                 width: document.getElementById('width').value ? parseFloat(document.getElementById('width').value) : null,
                 height: document.getElementById('height').value ? parseFloat(document.getElementById('height').value) : null,
                 weight: document.getElementById('weight').value ? parseFloat(document.getElementById('weight').value) : null,
+                
                 paymentMode: document.getElementById('paymentMode').value,
+                freightCost: freightCostNum,
                 expectedDelivery: document.getElementById('expectedDelivery').value || null,
-                status: document.getElementById('status').value,
-                remark: document.getElementById('remark').value,
-                trackingNumber: document.getElementById('trackingNumber').value || null
+                
+                trackingNumber: document.getElementById('trackingNumber').value || null,
+                remark: comment
             };
 
             const required = ['recipientName', 'recipientPhone', 'deliveryAddress', 'origin', 'destination'];
@@ -1354,8 +1740,15 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    showSuccess(`Shipment created successfully! Tracking: ${data.trackingNumber}`);
+                    showSuccess(`Shipment created successfully! Tracking: ${data.trackingNumber} with freight cost: £${freightCostNum.toFixed(2)}`);
                     document.getElementById('shipmentForm').reset();
+                    
+                    // Reset the freight cost field specifically
+                    document.getElementById('createFreightCost').value = '0.00';
+                    
+                    // Generate new tracking number
+                    generateTrackingNumber();
+                    
                     setTimeout(() => showSection('shipments'), 2000);
                 } else {
                     showError(data.message || 'Failed to create shipment');
@@ -1368,8 +1761,196 @@
             }
         }
 
+        // ============= SUBMIT STATUS UPDATE =============
+        async function submitStatusUpdate() {
+            const status = document.getElementById('updateStatus').value;
+            const location = document.getElementById('updateLocation').value;
+            const message = document.getElementById('updateMessage').value;
+            const remark = document.getElementById('updateRemark').value.trim();
+            const errorEl = document.getElementById('statusError');
+
+            errorEl.classList.remove('active');
+
+            if (!status) {
+                errorEl.textContent = 'Please select a status';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            if (!remark) {
+                errorEl.textContent = 'Remarks are required';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            if (!currentShipmentId) {
+                errorEl.textContent = 'Shipment ID not found';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/api/admin/shipments/${currentShipmentId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        status,
+                        location: location || 'Unknown',
+                        message: message || `Status updated to ${status}`,
+                        remark: remark
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showSuccess('Status updated successfully');
+                    closeStatusModal();
+                    loadShipments();
+                    if (document.getElementById('viewShipmentModal').classList.contains('active') && currentViewShipmentId === currentShipmentId) {
+                        viewShipment(currentShipmentId);
+                    }
+                } else {
+                    errorEl.textContent = data.message || 'Failed to update status';
+                    errorEl.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+                errorEl.textContent = 'Network error';
+                errorEl.classList.add('active');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // ============= SUBMIT REMARK ONLY =============
+        async function submitRemarkOnly() {
+            const location = document.getElementById('remarkLocation').value;
+            const message = document.getElementById('remarkMessage').value;
+            const remark = document.getElementById('remarkText').value.trim();
+            const errorEl = document.getElementById('remarkError');
+
+            errorEl.classList.remove('active');
+
+            if (!remark) {
+                errorEl.textContent = 'Remarks are required';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            if (!currentShipmentId) {
+                errorEl.textContent = 'Shipment ID not found';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/api/admin/shipments/${currentShipmentId}/remark`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        location: location || 'Unknown',
+                        message: message || 'Remark added',
+                        remark: remark
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showSuccess('Remark added successfully');
+                    closeRemarkModal();
+                    loadShipments();
+                    if (document.getElementById('viewShipmentModal').classList.contains('active') && currentViewShipmentId === currentShipmentId) {
+                        viewShipment(currentShipmentId);
+                    }
+                } else {
+                    errorEl.textContent = data.message || 'Failed to add remark';
+                    errorEl.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error adding remark:', error);
+                errorEl.textContent = 'Network error';
+                errorEl.classList.add('active');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // ============= SUBMIT FREIGHT COST =============
+        async function submitFreightCost() {
+            const freightCost = parseFloat(document.getElementById('freightCostInput').value);
+            const errorEl = document.getElementById('freightError');
+
+            errorEl.classList.remove('active');
+
+            if (isNaN(freightCost) || freightCost < 0) {
+                errorEl.textContent = 'Please enter a valid freight cost';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            if (!currentShipmentId) {
+                errorEl.textContent = 'Shipment ID not found';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/api/admin/shipments/${currentShipmentId}/freight`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ freightCost })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showSuccess(`Freight cost updated to £${freightCost.toFixed(2)}`);
+                    closeFreightCostModal();
+                    
+                    // Refresh data
+                    await loadShipments();
+                    
+                    // Update view modal if open
+                    if (document.getElementById('viewShipmentModal').classList.contains('active') && 
+                        currentViewShipmentId === currentShipmentId) {
+                        await viewShipment(currentShipmentId);
+                    }
+                } else {
+                    errorEl.textContent = data.message || 'Failed to update freight cost';
+                    errorEl.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error updating freight cost:', error);
+                errorEl.textContent = 'Network error';
+                errorEl.classList.add('active');
+            } finally {
+                setLoading(false);
+            }
+        }
+
         // ============= VIEW SHIPMENT =============
         async function viewShipment(id) {
+            currentViewShipmentId = id;
             setLoading(true);
             try {
                 const token = localStorage.getItem('token');
@@ -1402,29 +1983,53 @@
             
             let historyHtml = '';
             if (shipment.trackingHistory && shipment.trackingHistory.length > 0) {
-                shipment.trackingHistory.reverse().forEach(h => {
+                const sortedHistory = [...shipment.trackingHistory].sort((a, b) => 
+                    new Date(b.timestamp) - new Date(a.timestamp)
+                );
+                
+                sortedHistory.forEach(h => {
                     const date = h.timestamp ? new Date(h.timestamp).toLocaleString() : 'N/A';
+                    
+                    const remarkHtml = h.remark ? 
+                        `<div class="history-remark">
+                            <strong>📝 REMARKS:</strong> ${h.remark}
+                        </div>` : '';
+                    
                     historyHtml += `
                         <div class="history-item">
                             <span class="history-date">${date}</span>
                             <span class="history-status">${h.status || 'N/A'}</span>
-                            <span class="history-location">${h.location || 'N/A'}</span>
-                            <span class="history-updated">By: ${h.updatedBy || 'System'}</span>
+                            <span class="history-location">📍 ${h.location || 'N/A'}</span>
+                            ${h.message ? `<div style="color: #ccc; margin-top: 5px;">💬 ${h.message}</div>` : ''}
+                            ${remarkHtml}
                         </div>
                     `;
                 });
             }
 
+            const departureDate = shipment.departureDate ? new Date(shipment.departureDate).toLocaleDateString() : 'N/A';
+            const pickupDate = shipment.pickupDate ? new Date(shipment.pickupDate).toLocaleDateString() : 'N/A';
+            const expectedDelivery = shipment.expectedDelivery ? new Date(shipment.expectedDelivery).toLocaleDateString() : 'N/A';
+            const statusClass = shipment.status ? shipment.status.toLowerCase().replace(/ /g, '') : 'pending';
+            const freightDisplay = formatFreightCost(shipment.freightCost);
+            const freightClass = getFreightCostClass(shipment.freightCost);
+            const paymentClass = getPaymentModeClass(shipment.paymentMode);
+            const paymentDisplay = formatPaymentMode(shipment.paymentMode);
+
             detailsDiv.innerHTML = `
                 <div style="display: grid; gap: 1.5rem;">
                     <div class="form-section">
-                        <h3>Tracking Information</h3>
+                        <h3>📦 Shipment Details</h3>
                         <p><strong style="color: #00ffff;">Tracking Number:</strong> ${shipment.trackingNumber || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Status:</strong> <span class="status-badge status-${shipment.status?.toLowerCase().replace(/ /g, '') || 'pending'}">${shipment.status || 'Pending'}</span></p>
+                        <p><strong style="color: #00ffff;">Status:</strong> <span class="status-badge status-${statusClass}">${shipment.status || 'Pending'}</span></p>
+                        <p><strong style="color: #00ffff;">Departure Date:</strong> ${departureDate}</p>
+                        <p><strong style="color: #00ffff;">Pickup Date:</strong> ${pickupDate}</p>
+                        <p><strong style="color: #00ffff;">Package Type:</strong> ${shipment.packageType || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Package Status:</strong> ${shipment.packageStatus || 'N/A'}</p>
                     </div>
 
                     <div class="form-section">
-                        <h3>Recipient Information</h3>
+                        <h3>👤 Recipient Information</h3>
                         <p><strong style="color: #00ffff;">Name:</strong> ${shipment.recipientName || 'N/A'}</p>
                         <p><strong style="color: #00ffff;">Email:</strong> ${shipment.recipientEmail || 'N/A'}</p>
                         <p><strong style="color: #00ffff;">Phone:</strong> ${shipment.recipientPhone || 'N/A'}</p>
@@ -1432,15 +2037,17 @@
                     </div>
 
                     <div class="form-section">
-                        <h3>Shipment Information</h3>
+                        <h3>📍 Shipment Information</h3>
                         <p><strong style="color: #00ffff;">Origin:</strong> ${shipment.origin || 'N/A'}</p>
                         <p><strong style="color: #00ffff;">Destination:</strong> ${shipment.destination || 'N/A'}</p>
                         <p><strong style="color: #00ffff;">Carrier:</strong> ${shipment.carrier || 'N/A'}</p>
                         <p><strong style="color: #00ffff;">Shipment Type:</strong> ${shipment.shipmentType || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Expected Delivery:</strong> ${expectedDelivery}</p>
                     </div>
 
                     <div class="form-section">
-                        <h3>Package Details</h3>
+                        <h3>📋 Package Details</h3>
+                        <p><strong style="color: #00ffff;">Piece Type:</strong> ${shipment.pieceType || 'N/A'}</p>
                         <p><strong style="color: #00ffff;">Product:</strong> ${shipment.product || 'N/A'}</p>
                         <p><strong style="color: #00ffff;">Quantity:</strong> ${shipment.quantity || 'N/A'}</p>
                         <p><strong style="color: #00ffff;">Description:</strong> ${shipment.description || 'N/A'}</p>
@@ -1449,21 +2056,16 @@
                     </div>
 
                     <div class="form-section">
-                        <h3>Payment</h3>
-                        <p><strong style="color: #00ffff;">Payment Mode:</strong> ${shipment.paymentMode || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Expected Delivery:</strong> ${shipment.expectedDelivery ? new Date(shipment.expectedDelivery).toLocaleDateString() : 'N/A'}</p>
+                        <h3>💳 Payment Information</h3>
+                        <p><strong style="color: #00ffff;">Payment Mode:</strong> <span class="payment-mode ${paymentClass}">${paymentDisplay}</span></p>
+                        <p><strong style="color: #00ffff;">Freight Cost:</strong> <span class="${freightClass}">${freightDisplay}</span></p>
+                        ${shipment.paymentMode === 'freight' ? '<p><small style="color: #ffa500;">⚠️ Freight charges to be collected upon delivery</small></p>' : ''}
                     </div>
 
                     <div class="form-section">
-                        <h3>Remarks</h3>
-                        <p><strong style="color: #00ffff;">Remark:</strong> ${shipment.remark || 'No remarks'}</p>
-                        <p><strong style="color: #00ffff;">Created:</strong> ${shipment.createdAt ? new Date(shipment.createdAt).toLocaleString() : 'N/A'}</p>
-                    </div>
-
-                    <div class="form-section">
-                        <h3>Tracking History</h3>
+                        <h3>📜 Tracking History (${shipment.trackingHistory?.length || 0} entries)</h3>
                         <div class="history-timeline">
-                            ${historyHtml || '<p style="color: #888;">No history available</p>'}
+                            ${historyHtml || '<p style="color: #888; text-align: center;">No tracking history available</p>'}
                         </div>
                     </div>
                 </div>
@@ -1473,11 +2075,12 @@
         // ============= CLOSE VIEW MODAL =============
         function closeViewModal() {
             document.getElementById('viewShipmentModal').classList.remove('active');
+            currentViewShipmentId = null;
         }
 
         // ============= DELETE SHIPMENT =============
         async function deleteShipment(id) {
-            if (!confirm('Are you sure you want to delete this shipment?')) return;
+            if (!confirm('Are you sure you want to delete this shipment? This action cannot be undone.')) return;
             
             setLoading(true);
             try {
@@ -1513,11 +2116,24 @@
         window.onclick = function(event) {
             const registerModal = document.getElementById('registerModal');
             const viewModal = document.getElementById('viewShipmentModal');
+            const statusModal = document.getElementById('updateStatusModal');
+            const remarkModal = document.getElementById('addRemarkModal');
+            const freightModal = document.getElementById('freightCostModal');
+            
             if (event.target === registerModal) {
                 closeRegisterModal();
             }
             if (event.target === viewModal) {
                 closeViewModal();
+            }
+            if (event.target === statusModal) {
+                closeStatusModal();
+            }
+            if (event.target === remarkModal) {
+                closeRemarkModal();
+            }
+            if (event.target === freightModal) {
+                closeFreightCostModal();
             }
         }
     </script>
