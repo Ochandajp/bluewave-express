@@ -14,7 +14,7 @@ app.use(express.static(path.join(__dirname)));
 
 // ============= MongoDB Connection =============
 // Your exact MongoDB URL with the 'site' database
-const MONGODB_URI = 'mongodb+srv://johnpaul:jp54321@cluster0.ugm91.mongodb.net/site?retryWrites=true&w=majority&appName=Cluster0';
+const MONGODB_URI = 'mongodb+srv://johnpaul:jp54321@cluster0.ugm91.mongodb.net/';
 
 mongoose.connect(MONGODB_URI, {
     useNewUrlParser: true,
