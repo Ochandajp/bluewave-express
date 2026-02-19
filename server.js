@@ -17,6 +17,8 @@ app.use(cors({
 }));
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
+
+// Serve static files from current directory
 app.use(express.static(path.join(__dirname)));
 
 // ============= MongoDB Connection =============
@@ -307,17 +309,19 @@ app.get('/api/setup-admin', async (req, res) => {
     }
 });
 
-// ============= STATIC ROUTES =============
-// UPDATED: Added login route
+// ============= STATIC ROUTES - FIXED =============
 
+// Home page (public tracking)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Login page
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
+// Admin page - This will redirect to login if not authenticated via frontend
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
@@ -331,7 +335,6 @@ app.post('/api/login', async (req, res) => {
         console.log('🔐 Login attempt for username/email:', username);
 
         if (!username || !password) {
-            console.log('❌ Missing username or password');
             return res.status(400).json({ 
                 success: false, 
                 message: 'Username and password required' 
@@ -342,37 +345,16 @@ app.post('/api/login', async (req, res) => {
             $or: [{ username: username }, { email: username }] 
         });
         
-        console.log('📋 User found in database:', user ? 'Yes' : 'No');
-        
         if (!user) {
-            console.log('❌ User not found with username/email:', username);
             return res.status(401).json({ 
                 success: false, 
                 message: 'Invalid credentials' 
             });
         }
 
-        console.log('👤 User details:', {
-            id: user._id,
-            name: user.name,
-            username: user.username,
-            email: user.email,
-            isAdmin: user.isAdmin
-        });
-
-        if (!user.password) {
-            console.log('❌ User has no password stored!');
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Account error - no password set' 
-            });
-        }
-
         const isPasswordValid = await bcrypt.compare(password, user.password);
-        console.log('🔑 Password valid:', isPasswordValid ? 'Yes' : 'No');
         
         if (!isPasswordValid) {
-            console.log('❌ Invalid password for user:', username);
             return res.status(401).json({ 
                 success: false, 
                 message: 'Invalid credentials' 
@@ -380,7 +362,6 @@ app.post('/api/login', async (req, res) => {
         }
 
         if (user.status === 'inactive') {
-            console.log('❌ Account is inactive for user:', username);
             return res.status(403).json({ 
                 success: false, 
                 message: 'Account is deactivated' 
@@ -389,7 +370,6 @@ app.post('/api/login', async (req, res) => {
 
         user.lastLogin = new Date();
         await user.save();
-        console.log('✅ Last login updated for user:', username);
 
         const token = jwt.sign(
             { 
@@ -400,8 +380,6 @@ app.post('/api/login', async (req, res) => {
             JWT_SECRET,
             { expiresIn: '7d' }
         );
-        
-        console.log('✅ JWT token generated successfully');
 
         res.json({ 
             success: true,
@@ -417,8 +395,6 @@ app.post('/api/login', async (req, res) => {
                 role: user.isAdmin ? 'admin' : 'user'
             }
         });
-
-        console.log('✅ Login successful for user:', username);
 
     } catch (error) {
         console.error('❌ Login error:', error);
@@ -467,13 +443,6 @@ app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
                 message: 'Shipment not found' 
             });
         }
-
-        console.log('📦 Tracking - Shipment found:', {
-            trackingNumber: shipment.trackingNumber,
-            packageType: shipment.packageType,
-            packageStatus: shipment.packageStatus,
-            departureDate: shipment.departureDate
-        });
 
         res.json({
             success: true,
@@ -589,22 +558,10 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             createdBy: req.user.id
         };
 
-        console.log('💾 SAVING TO MONGODB:', {
-            trackingNumber: shipmentData.trackingNumber,
-            packageType: shipmentData.packageType,
-            packageStatus: shipmentData.packageStatus,
-            departureDate: shipmentData.departureDate
-        });
-
         const shipment = new Shipment(shipmentData);
         const savedShipment = await shipment.save();
         
         console.log('✅ SHIPMENT SAVED SUCCESSFULLY!');
-        console.log('Saved fields:', {
-            packageType: savedShipment.packageType,
-            packageStatus: savedShipment.packageStatus,
-            departureDate: savedShipment.departureDate
-        });
 
         res.status(201).json({ 
             success: true,
@@ -634,9 +591,6 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
 app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
     try {
         const shipments = await Shipment.find().sort({ createdAt: -1 }).lean();
-        
-        console.log(`📋 Found ${shipments.length} shipments`);
-        
         res.json({
             success: true,
             shipments
@@ -660,7 +614,6 @@ app.get('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) => {
                 message: 'Shipment not found' 
             });
         }
-        
         res.json({
             success: true,
             shipment
@@ -786,8 +739,6 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
         });
         const deliveredShipments = await Shipment.countDocuments({ status: 'delivered' });
         const pendingShipments = await Shipment.countDocuments({ status: 'pending' });
-        const totalUsers = await User.countDocuments();
-        const adminUsers = await User.countDocuments({ isAdmin: true });
         
         const recentShipments = await Shipment.find()
             .sort({ createdAt: -1 })
@@ -800,8 +751,6 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
             activeShipments,
             deliveredShipments,
             pendingShipments,
-            totalUsers,
-            adminUsers,
             recentShipments
         });
     } catch (error) {
@@ -810,79 +759,6 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
             success: false,
             message: 'Error fetching stats' 
         });
-    }
-});
-
-// DEBUG: Check database contents
-app.get('/api/debug/check-db', authenticate, isAdmin, async (req, res) => {
-    try {
-        const count = await Shipment.countDocuments();
-        const allShipments = await Shipment.find().limit(10).lean();
-        
-        const fieldPresence = {
-            totalShipments: count,
-            withPackageType: await Shipment.countDocuments({ packageType: { $exists: true } }),
-            withPackageStatus: await Shipment.countDocuments({ packageStatus: { $exists: true } }),
-            withDepartureDate: await Shipment.countDocuments({ departureDate: { $exists: true } }),
-            withComment: await Shipment.countDocuments({ comment: { $exists: true } })
-        };
-        
-        res.json({
-            success: true,
-            databaseConnected: mongoose.connection.readyState === 1,
-            databaseName: mongoose.connection.name,
-            fieldPresence,
-            sampleShipments: allShipments.map(s => ({
-                trackingNumber: s.trackingNumber,
-                packageType: s.packageType || 'MISSING',
-                packageStatus: s.packageStatus || 'MISSING',
-                departureDate: s.departureDate || 'MISSING',
-                comment: s.comment || 'MISSING'
-            }))
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// DEBUG: Fix missing fields in existing shipments
-app.post('/api/debug/fix-shipments', authenticate, isAdmin, async (req, res) => {
-    try {
-        const shipments = await Shipment.find({});
-        let fixed = 0;
-        
-        for (const shipment of shipments) {
-            const updates = {};
-            
-            if (!shipment.packageType && shipment.packageType !== '') {
-                updates.packageType = '';
-                fixed++;
-            }
-            if (!shipment.packageStatus && shipment.packageStatus !== '') {
-                updates.packageStatus = '';
-                fixed++;
-            }
-            if (!shipment.departureDate && shipment.departureDate !== '') {
-                updates.departureDate = '';
-                fixed++;
-            }
-            if (!shipment.comment && shipment.remark) {
-                updates.comment = shipment.remark;
-                fixed++;
-            }
-            
-            if (Object.keys(updates).length > 0) {
-                await Shipment.updateOne({ _id: shipment._id }, { $set: updates });
-                console.log(`Fixed shipment ${shipment.trackingNumber}:`, updates);
-            }
-        }
-        
-        res.json({
-            success: true,
-            message: `Fixed ${fixed} fields across ${shipments.length} shipments`
-        });
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
 });
 
@@ -910,33 +786,22 @@ app.use((err, req, res, next) => {
 // ============= START SERVER =============
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Server running on port ${PORT}`);
-    console.log(`📱 Test API: http://localhost:${PORT}/api/test`);
-    console.log(`🔧 Setup Admin: http://localhost:${PORT}/api/setup-admin`);
-    console.log(`📦 Public Tracking: http://localhost:${PORT}`);
+    console.log(`📦 Public Tracking: http://localhost:${PORT}/`);
     console.log(`🔐 Login Page: http://localhost:${PORT}/login`);
     console.log(`👤 Admin Panel: http://localhost:${PORT}/admin`);
-    console.log(`🔍 Debug DB: http://localhost:${PORT}/api/debug/check-db`);
-    console.log(`🔧 Fix DB: http://localhost:${PORT}/api/debug/fix-shipments (POST)\n`);
+    console.log(`🔧 Setup Admin: http://localhost:${PORT}/api/setup-admin\n`);
 });
 
 process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server');
     server.close(() => {
-        console.log('HTTP server closed');
-        mongoose.connection.close(false, () => {
-            console.log('MongoDB connection closed');
-            process.exit(0);
-        });
+        mongoose.connection.close();
+        process.exit(0);
     });
 });
 
 process.on('SIGINT', () => {
-    console.log('SIGINT signal received: closing HTTP server');
     server.close(() => {
-        console.log('HTTP server closed');
-        mongoose.connection.close(false, () => {
-            console.log('MongoDB connection closed');
-            process.exit(0);
-        });
+        mongoose.connection.close();
+        process.exit(0);
     });
 });
