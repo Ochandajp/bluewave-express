@@ -324,6 +324,12 @@
             font-weight: bold;
         }
 
+        .freight-tba {
+            color: #ffa500;
+            font-weight: bold;
+            font-style: italic;
+        }
+
         .action-buttons {
             display: flex;
             gap: 0.5rem;
@@ -343,7 +349,6 @@
         .btn-edit { background: #ff00ff33; color: #ff00ff; }
         .btn-delete { background: #ff444433; color: #ff4444; }
         .btn-track { background: #00ff0033; color: #00ff00; }
-        .btn-remark { background: #ffa50033; color: #ffa500; }
         .btn-cost { background: #00ff0033; color: #00ff00; }
 
         .action-btn:hover {
@@ -801,31 +806,6 @@
         </div>
     </div>
 
-    <!-- Add Remark Only Modal -->
-    <div class="modal" id="addRemarkModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>Add Tracking Remark</h2>
-                <span class="close-modal" onclick="closeRemarkModal()">&times;</span>
-            </div>
-            <div class="form-group">
-                <label>Location</label>
-                <input type="text" id="remarkLocation" placeholder="Current location">
-            </div>
-            <div class="form-group">
-                <label>Message</label>
-                <input type="text" id="remarkMessage" placeholder="Brief message">
-            </div>
-            <div class="form-group">
-                <label class="required-field">Remarks</label>
-                <textarea id="remarkText" rows="5" placeholder="Enter your remarks here..." required></textarea>
-                <div class="remark-count" id="remarkTextCount">0 characters</div>
-            </div>
-            <button class="btn-submit" onclick="submitRemarkOnly()">Add Remark</button>
-            <div class="error-message" id="remarkError"></div>
-        </div>
-    </div>
-
     <!-- Update Freight Cost Modal -->
     <div class="modal" id="freightCostModal">
         <div class="modal-content" style="max-width: 500px;">
@@ -974,7 +954,7 @@
                     </div>
                 </div>
 
-                <!-- Create Shipment Section (UPDATED - Added sender fields) -->
+                <!-- Create Shipment Section -->
                 <div id="createSectionContent" style="display: none;">
                     <div class="section-header">
                         <h2 class="section-title">Create New Shipment</h2>
@@ -1019,7 +999,7 @@
                                 </div>
                             </div>
 
-                            <!-- Sender Information (NEW) -->
+                            <!-- Sender Information -->
                             <div class="form-section">
                                 <h3>📤 Sender Information</h3>
                                 <div class="form-grid">
@@ -1176,14 +1156,13 @@
         </div>
     </div>
 
-    <!-- View Shipment Modal (UPDATED - Added sender information) -->
+    <!-- View Shipment Modal -->
     <div class="modal" id="viewShipmentModal">
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Shipment Details</h2>
                 <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <button class="btn-primary" onclick="showUpdateStatusModalFromView()">Update Status</button>
-                    <button class="btn-warning" onclick="showAddRemarkModalFromView()">Add Remark</button>
                     <button class="btn-cost" onclick="showFreightCostModalFromView()">Set Cost</button>
                     <span class="close-modal" onclick="closeViewModal()">&times;</span>
                 </div>
@@ -1208,13 +1187,6 @@
             if (remarkTextarea) {
                 remarkTextarea.addEventListener('input', function() {
                     document.getElementById('remarkCount').textContent = this.value.length + ' characters';
-                });
-            }
-
-            const remarkOnlyTextarea = document.getElementById('remarkText');
-            if (remarkOnlyTextarea) {
-                remarkOnlyTextarea.addEventListener('input', function() {
-                    document.getElementById('remarkTextCount').textContent = this.value.length + ' characters';
                 });
             }
         });
@@ -1264,28 +1236,6 @@
             currentShipmentId = null;
         }
 
-        // ============= REMARK ONLY MODAL FUNCTIONS =============
-        function showAddRemarkModal(shipmentId) {
-            currentShipmentId = shipmentId;
-            document.getElementById('remarkLocation').value = '';
-            document.getElementById('remarkMessage').value = '';
-            document.getElementById('remarkText').value = '';
-            document.getElementById('remarkTextCount').textContent = '0 characters';
-            document.getElementById('remarkError').classList.remove('active');
-            document.getElementById('addRemarkModal').classList.add('active');
-        }
-
-        function showAddRemarkModalFromView() {
-            if (currentViewShipmentId) {
-                showAddRemarkModal(currentViewShipmentId);
-            }
-        }
-
-        function closeRemarkModal() {
-            document.getElementById('addRemarkModal').classList.remove('active');
-            currentShipmentId = null;
-        }
-
         // ============= FREIGHT COST MODAL FUNCTIONS =============
         function showFreightCostModal(shipmentId, currentCost) {
             currentShipmentId = shipmentId;
@@ -1296,8 +1246,8 @@
 
         function showFreightCostModalFromView() {
             if (currentViewShipmentId) {
-                const costElement = document.querySelector('#viewShipmentDetails .freight-cost');
-                const currentCost = costElement ? costElement.textContent.replace('£', '') : '';
+                const costElement = document.querySelector('#viewShipmentDetails .freight-cost, #viewShipmentDetails .freight-tba');
+                const currentCost = costElement && costElement.classList.contains('freight-cost') ? costElement.textContent.replace('£', '') : '';
                 showFreightCostModal(currentViewShipmentId, currentCost);
             }
         }
@@ -1501,7 +1451,7 @@
             }
         }
 
-        // ============= DISPLAY RECENT SHIPMENTS (UPDATED - Added ID and sender) =============
+        // ============= DISPLAY RECENT SHIPMENTS =============
         function displayRecentShipments(shipments) {
             const tbody = document.getElementById('recentShipmentsTable');
             
@@ -1513,23 +1463,26 @@
             let html = '';
             shipments.slice(0, 5).forEach(s => {
                 const statusClass = s.status ? s.status.toLowerCase().replace(/ /g, '') : 'pending';
-                // Properly display freight cost
-                const freightCost = (s.freightCost !== undefined && s.freightCost !== null && s.freightCost > 0) 
-                    ? `£${s.freightCost.toFixed(2)}` 
-                    : (s.freightCost === 0 ? '£0.00' : 'TBA');
                 
-                // Shorten IDs for display
-                const shortId = s._id ? s._id.toString().substring(0, 8) + '...' : 'N/A';
+                let freightDisplay = '<span class="freight-tba">TBA</span>';
+                if (s.freightCost !== undefined && s.freightCost !== null && s.freightCost > 0) {
+                    freightDisplay = `<span class="freight-cost">£${s.freightCost.toFixed(2)}</span>`;
+                } else if (s.freightCost === 0) {
+                    freightDisplay = '<span class="freight-cost">£0.00</span>';
+                }
+                
+                const shortId = s._id ? s._id.toString().substring(0, 8) + '...' : '';
+                const route = s.origin && s.destination ? `${s.origin} → ${s.destination}` : (s.origin || s.destination || '');
                 
                 html += `
                     <tr>
                         <td><span class="shipment-id" title="${s._id}">${shortId}</span></td>
-                        <td>${s.trackingNumber || 'N/A'}</td>
-                        <td>${s.senderName || 'N/A'}</td>
-                        <td>${s.recipientName || 'N/A'}</td>
-                        <td>${s.origin || 'N/A'} → ${s.destination || 'N/A'}</td>
+                        <td>${s.trackingNumber || ''}</td>
+                        <td>${s.senderName || ''}</td>
+                        <td>${s.recipientName || ''}</td>
+                        <td>${route}</td>
                         <td><span class="status-badge status-${statusClass}">${s.status || 'Pending'}</span></td>
-                        <td class="freight-cost">${freightCost}</td>
+                        <td>${freightDisplay}</td>
                         <td>
                             <button class="action-btn btn-view" onclick="viewShipment('${s._id}')">View</button>
                         </td>
@@ -1567,7 +1520,7 @@
             }
         }
 
-        // ============= DISPLAY SHIPMENTS (UPDATED - Added ID and sender) =============
+        // ============= DISPLAY SHIPMENTS =============
         function displayShipments(shipments) {
             const tbody = document.getElementById('shipmentsTableBody');
             
@@ -1579,27 +1532,29 @@
             let html = '';
             shipments.forEach(s => {
                 const statusClass = s.status ? s.status.toLowerCase().replace(/ /g, '') : 'pending';
-                // Properly display freight cost
-                const freightCost = (s.freightCost !== undefined && s.freightCost !== null && s.freightCost > 0) 
-                    ? `£${s.freightCost.toFixed(2)}` 
-                    : (s.freightCost === 0 ? '£0.00' : 'TBA');
                 
-                // Shorten IDs for display
-                const shortId = s._id ? s._id.toString().substring(0, 8) + '...' : 'N/A';
+                let freightDisplay = '<span class="freight-tba">TBA</span>';
+                if (s.freightCost !== undefined && s.freightCost !== null && s.freightCost > 0) {
+                    freightDisplay = `<span class="freight-cost">£${s.freightCost.toFixed(2)}</span>`;
+                } else if (s.freightCost === 0) {
+                    freightDisplay = '<span class="freight-cost">£0.00</span>';
+                }
+                
+                const shortId = s._id ? s._id.toString().substring(0, 8) + '...' : '';
+                const route = s.origin && s.destination ? `${s.origin} → ${s.destination}` : (s.origin || s.destination || '');
                 
                 html += `
                     <tr>
                         <td><span class="shipment-id" title="${s._id}">${shortId}</span></td>
-                        <td>${s.trackingNumber || 'N/A'}</td>
-                        <td>${s.senderName || 'N/A'}</td>
-                        <td>${s.recipientName || 'N/A'}</td>
-                        <td>${s.origin || 'N/A'} → ${s.destination || 'N/A'}</td>
+                        <td>${s.trackingNumber || ''}</td>
+                        <td>${s.senderName || ''}</td>
+                        <td>${s.recipientName || ''}</td>
+                        <td>${route}</td>
                         <td><span class="status-badge status-${statusClass}">${s.status || 'Pending'}</span></td>
-                        <td class="freight-cost">${freightCost}</td>
+                        <td>${freightDisplay}</td>
                         <td class="action-buttons">
                             <button class="action-btn btn-view" onclick="viewShipment('${s._id}')">View</button>
                             <button class="action-btn btn-track" onclick="showUpdateStatusModal('${s._id}', '${s.status || 'pending'}')">Status</button>
-                            <button class="action-btn btn-remark" onclick="showAddRemarkModal('${s._id}')">Remark</button>
                             <button class="action-btn btn-cost" onclick="showFreightCostModal('${s._id}', '${s.freightCost || ''}')">Cost</button>
                             <button class="action-btn btn-delete" onclick="deleteShipment('${s._id}')">Delete</button>
                         </td>
@@ -1615,82 +1570,78 @@
             loadShipments();
         }
 
-        // ============= CREATE SHIPMENT (UPDATED - Added sender fields) =============
+        // ============= CREATE SHIPMENT - FIXED VERSION =============
         async function createShipment() {
-            const comment = document.getElementById('comment').value;
+            try {
+                // Get ALL form values
+                const formData = {
+                    // Sender Information
+                    senderName: document.getElementById('senderName')?.value || '',
+                    senderEmail: document.getElementById('senderEmail')?.value || '',
+                    senderPhone: document.getElementById('senderPhone')?.value || '',
+                    senderAddress: document.getElementById('senderAddress')?.value || '',
+                    
+                    // Recipient Information
+                    recipientName: document.getElementById('recipientName')?.value || '',
+                    recipientEmail: document.getElementById('recipientEmail')?.value || '',
+                    recipientPhone: document.getElementById('recipientPhone')?.value || '',
+                    deliveryAddress: document.getElementById('deliveryAddress')?.value || '',
+                    
+                    // Shipment Information
+                    origin: document.getElementById('origin')?.value || '',
+                    destination: document.getElementById('destination')?.value || '',
+                    carrier: document.getElementById('carrier')?.value || '',
+                    shipmentType: document.getElementById('shipmentType')?.value || 'ROAD',
+                    status: document.getElementById('status')?.value || 'pending',
+                    
+                    // Package Details
+                    pieceType: document.getElementById('pieceType')?.value || '',
+                    product: document.getElementById('product')?.value || '',
+                    quantity: document.getElementById('quantity')?.value || '',
+                    description: document.getElementById('description')?.value || '',
+                    packageType: document.getElementById('packageType')?.value || '',
+                    packageStatus: document.getElementById('packageStatus')?.value || '',
+                    length: document.getElementById('length')?.value || '',
+                    width: document.getElementById('width')?.value || '',
+                    height: document.getElementById('height')?.value || '',
+                    weight: document.getElementById('weight')?.value || '',
+                    
+                    // Dates
+                    departureDate: document.getElementById('departureDate')?.value || '',
+                    pickupDate: document.getElementById('pickupDate')?.value || '',
+                    expectedDelivery: document.getElementById('expectedDelivery')?.value || '',
+                    
+                    // Payment
+                    paymentMode: document.getElementById('paymentMode')?.value || 'cash',
+                    freightCost: document.getElementById('freightCost')?.value ? parseFloat(document.getElementById('freightCost').value) : 0,
+                    
+                    // Remarks
+                    comment: document.getElementById('comment')?.value || '',
+                    
+                    // Tracking
+                    trackingNumber: document.getElementById('trackingNumber')?.value || ''
+                };
 
-            if (!comment || comment.trim() === '') {
-                showError('Initial remarks are required');
-                return;
-            }
-
-            // Validate sender fields
-            const senderName = document.getElementById('senderName').value;
-            const senderPhone = document.getElementById('senderPhone').value;
-            const senderAddress = document.getElementById('senderAddress').value;
-
-            if (!senderName || !senderPhone || !senderAddress) {
-                showError('Sender name, phone and address are required');
-                return;
-            }
-
-            const shipmentData = {
-                // Sender Information
-                senderName: senderName,
-                senderEmail: document.getElementById('senderEmail').value,
-                senderPhone: senderPhone,
-                senderAddress: senderAddress,
-                
-                // Shipment Details
-                departureDate: document.getElementById('departureDate').value || null,
-                pickupDate: document.getElementById('pickupDate').value || null,
-                packageType: document.getElementById('packageType').value,
-                packageStatus: document.getElementById('packageStatus').value,
-                comment: comment,
-                
-                // Recipient Information
-                recipientName: document.getElementById('recipientName').value,
-                recipientEmail: document.getElementById('recipientEmail').value,
-                recipientPhone: document.getElementById('recipientPhone').value,
-                deliveryAddress: document.getElementById('deliveryAddress').value,
-                
-                // Shipment Information
-                origin: document.getElementById('origin').value,
-                destination: document.getElementById('destination').value,
-                carrier: document.getElementById('carrier').value,
-                shipmentType: document.getElementById('shipmentType').value,
-                status: document.getElementById('status').value,
-                
-                // Package Details
-                pieceType: document.getElementById('pieceType').value,
-                product: document.getElementById('product').value,
-                quantity: document.getElementById('quantity').value ? parseInt(document.getElementById('quantity').value) : null,
-                description: document.getElementById('description').value,
-                length: document.getElementById('length').value ? parseFloat(document.getElementById('length').value) : null,
-                width: document.getElementById('width').value ? parseFloat(document.getElementById('width').value) : null,
-                height: document.getElementById('height').value ? parseFloat(document.getElementById('height').value) : null,
-                weight: document.getElementById('weight').value ? parseFloat(document.getElementById('weight').value) : null,
-                
-                // Payment & Freight
-                paymentMode: document.getElementById('paymentMode').value,
-                freightCost: document.getElementById('freightCost').value ? parseFloat(document.getElementById('freightCost').value) : 0,
-                expectedDelivery: document.getElementById('expectedDelivery').value || null,
-                
-                trackingNumber: document.getElementById('trackingNumber').value || null,
-                remark: comment
-            };
-
-            const required = ['recipientName', 'recipientPhone', 'deliveryAddress', 'origin', 'destination'];
-            for (let field of required) {
-                if (!shipmentData[field]) {
-                    showError('Please fill in all required fields');
+                // Validate required fields
+                if (!formData.comment) {
+                    showError('Initial remarks are required');
                     return;
                 }
-            }
 
-            setLoading(true);
+                if (!formData.senderName || !formData.senderPhone || !formData.senderAddress) {
+                    showError('Sender name, phone and address are required');
+                    return;
+                }
 
-            try {
+                if (!formData.origin || !formData.destination) {
+                    showError('Origin and destination are required');
+                    return;
+                }
+
+                console.log('📤 Sending data to server:', formData);
+
+                setLoading(true);
+
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_URL}/api/shipments`, {
                     method: 'POST',
@@ -1698,21 +1649,22 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify(shipmentData)
+                    body: JSON.stringify(formData)
                 });
 
                 const data = await response.json();
+                console.log('📥 Server response:', data);
 
                 if (response.ok && data.success) {
-                    showSuccess(`Shipment created successfully! Tracking: ${data.trackingNumber} (ID: ${data.shipmentId})`);
+                    showSuccess(`Shipment created! Tracking: ${data.trackingNumber}`);
                     document.getElementById('shipmentForm').reset();
                     setTimeout(() => showSection('shipments'), 2000);
                 } else {
                     showError(data.message || 'Failed to create shipment');
                 }
             } catch (error) {
-                console.error('Error creating shipment:', error);
-                showError('Network error');
+                console.error('❌ Error creating shipment:', error);
+                showError('Network error: ' + error.message);
             } finally {
                 setLoading(false);
             }
@@ -1780,70 +1732,6 @@
             } catch (error) {
                 console.error('Error updating status:', error);
                 errorEl.textContent = 'Network error';
-                errorEl.classList.add('active');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // ============= SUBMIT REMARK ONLY =============
-        async function submitRemarkOnly() {
-            const location = document.getElementById('remarkLocation').value;
-            const message = document.getElementById('remarkMessage').value;
-            const remark = document.getElementById('remarkText').value.trim();
-            const errorEl = document.getElementById('remarkError');
-
-            errorEl.classList.remove('active');
-
-            if (!remark) {
-                errorEl.textContent = 'Remarks are required';
-                errorEl.classList.add('active');
-                return;
-            }
-
-            if (!currentShipmentId) {
-                errorEl.textContent = 'Shipment ID not found';
-                errorEl.classList.add('active');
-                return;
-            }
-
-            setLoading(true);
-
-            try {
-                const token = localStorage.getItem('token');
-                const url = `${API_URL}/api/admin/shipments/${currentShipmentId}/remark`;
-                console.log('Sending remark to:', url);
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        location: location || 'Unknown',
-                        message: message || 'Remark added',
-                        remark: remark
-                    })
-                });
-
-                const data = await response.json();
-                console.log('Remark response:', data);
-
-                if (response.ok && data.success) {
-                    showSuccess('Remark added successfully');
-                    closeRemarkModal();
-                    loadShipments();
-                    if (document.getElementById('viewShipmentModal').classList.contains('active') && currentViewShipmentId === currentShipmentId) {
-                        viewShipment(currentShipmentId);
-                    }
-                } else {
-                    errorEl.textContent = data.message || 'Failed to add remark';
-                    errorEl.classList.add('active');
-                }
-            } catch (error) {
-                console.error('Error adding remark:', error);
-                errorEl.textContent = 'Network error: ' + error.message;
                 errorEl.classList.add('active');
             } finally {
                 setLoading(false);
@@ -1933,7 +1821,7 @@
             }
         }
 
-        // ============= DISPLAY SHIPMENT DETAILS (UPDATED - Added sender information) =============
+        // ============= DISPLAY SHIPMENT DETAILS =============
         function displayShipmentDetails(shipment) {
             const detailsDiv = document.getElementById('viewShipmentDetails');
             
@@ -1944,7 +1832,7 @@
                 );
                 
                 sortedHistory.forEach(h => {
-                    const date = h.timestamp ? new Date(h.timestamp).toLocaleString() : 'N/A';
+                    const date = h.timestamp ? new Date(h.timestamp).toLocaleString() : '';
                     
                     const remarkHtml = h.remark ? 
                         `<div class="history-remark">
@@ -1954,8 +1842,8 @@
                     historyHtml += `
                         <div class="history-item">
                             <span class="history-date">${date}</span>
-                            <span class="history-status">${h.status || 'N/A'}</span>
-                            <span class="history-location">📍 ${h.location || 'N/A'}</span>
+                            <span class="history-status">${h.status || ''}</span>
+                            <span class="history-location">📍 ${h.location || ''}</span>
                             ${h.message ? `<div style="color: #ccc; margin-top: 5px;">💬 ${h.message}</div>` : ''}
                             ${remarkHtml}
                         </div>
@@ -1963,68 +1851,70 @@
                 });
             }
 
-            const departureDate = shipment.departureDate ? new Date(shipment.departureDate).toLocaleDateString() : 'N/A';
-            const pickupDate = shipment.pickupDate ? new Date(shipment.pickupDate).toLocaleDateString() : 'N/A';
-            const expectedDelivery = shipment.expectedDelivery ? new Date(shipment.expectedDelivery).toLocaleDateString() : 'N/A';
+            const departureDate = shipment.departureDate || '';
+            const pickupDate = shipment.pickupDate || '';
+            const expectedDelivery = shipment.expectedDelivery || '';
             const statusClass = shipment.status ? shipment.status.toLowerCase().replace(/ /g, '') : 'pending';
             
-            // Properly display freight cost
-            const freightCost = (shipment.freightCost !== undefined && shipment.freightCost !== null && shipment.freightCost > 0) 
-                ? `£${shipment.freightCost.toFixed(2)}` 
-                : (shipment.freightCost === 0 ? '£0.00' : 'To be advised');
+            let freightDisplay = '<span class="freight-tba">TBA</span>';
+            if (shipment.freightCost !== undefined && shipment.freightCost !== null && shipment.freightCost > 0) {
+                freightDisplay = `<span class="freight-cost">£${shipment.freightCost.toFixed(2)}</span>`;
+            } else if (shipment.freightCost === 0) {
+                freightDisplay = '<span class="freight-cost">£0.00</span>';
+            }
 
             detailsDiv.innerHTML = `
                 <div style="display: grid; gap: 1.5rem;">
                     <div class="form-section">
                         <h3>📦 Shipment Details</h3>
-                        <p><strong style="color: #00ffff;">Shipment ID:</strong> <span class="shipment-id">${shipment._id || 'N/A'}</span></p>
-                        <p><strong style="color: #00ffff;">Tracking Number:</strong> ${shipment.trackingNumber || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Shipment ID:</strong> <span class="shipment-id">${shipment._id || ''}</span></p>
+                        <p><strong style="color: #00ffff;">Tracking Number:</strong> ${shipment.trackingNumber || ''}</p>
                         <p><strong style="color: #00ffff;">Status:</strong> <span class="status-badge status-${statusClass}">${shipment.status || 'Pending'}</span></p>
                         <p><strong style="color: #00ffff;">Departure Date:</strong> ${departureDate}</p>
                         <p><strong style="color: #00ffff;">Pickup Date:</strong> ${pickupDate}</p>
-                        <p><strong style="color: #00ffff;">Package Type:</strong> ${shipment.packageType || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Package Status:</strong> ${shipment.packageStatus || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Package Type:</strong> ${shipment.packageType || ''}</p>
+                        <p><strong style="color: #00ffff;">Package Status:</strong> ${shipment.packageStatus || ''}</p>
                     </div>
 
                     <div class="form-section">
                         <h3>📤 Sender Information</h3>
-                        <p><strong style="color: #00ffff;">Name:</strong> ${shipment.senderName || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Email:</strong> ${shipment.senderEmail || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Phone:</strong> ${shipment.senderPhone || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Address:</strong> ${shipment.senderAddress || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Name:</strong> ${shipment.senderName || ''}</p>
+                        <p><strong style="color: #00ffff;">Email:</strong> ${shipment.senderEmail || ''}</p>
+                        <p><strong style="color: #00ffff;">Phone:</strong> ${shipment.senderPhone || ''}</p>
+                        <p><strong style="color: #00ffff;">Address:</strong> ${shipment.senderAddress || ''}</p>
                     </div>
 
                     <div class="form-section">
                         <h3>👤 Recipient Information</h3>
-                        <p><strong style="color: #00ffff;">Name:</strong> ${shipment.recipientName || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Email:</strong> ${shipment.recipientEmail || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Phone:</strong> ${shipment.recipientPhone || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Address:</strong> ${shipment.deliveryAddress || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Name:</strong> ${shipment.recipientName || ''}</p>
+                        <p><strong style="color: #00ffff;">Email:</strong> ${shipment.recipientEmail || ''}</p>
+                        <p><strong style="color: #00ffff;">Phone:</strong> ${shipment.recipientPhone || ''}</p>
+                        <p><strong style="color: #00ffff;">Address:</strong> ${shipment.deliveryAddress || ''}</p>
                     </div>
 
                     <div class="form-section">
                         <h3>📍 Shipment Information</h3>
-                        <p><strong style="color: #00ffff;">Origin:</strong> ${shipment.origin || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Destination:</strong> ${shipment.destination || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Carrier:</strong> ${shipment.carrier || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Shipment Type:</strong> ${shipment.shipmentType || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Origin:</strong> ${shipment.origin || ''}</p>
+                        <p><strong style="color: #00ffff;">Destination:</strong> ${shipment.destination || ''}</p>
+                        <p><strong style="color: #00ffff;">Carrier:</strong> ${shipment.carrier || ''}</p>
+                        <p><strong style="color: #00ffff;">Shipment Type:</strong> ${shipment.shipmentType || ''}</p>
                         <p><strong style="color: #00ffff;">Expected Delivery:</strong> ${expectedDelivery}</p>
                     </div>
 
                     <div class="form-section">
                         <h3>📋 Package Details</h3>
-                        <p><strong style="color: #00ffff;">Piece Type:</strong> ${shipment.pieceType || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Product:</strong> ${shipment.product || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Quantity:</strong> ${shipment.quantity || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Description:</strong> ${shipment.description || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Dimensions:</strong> ${shipment.length || 'N/A'}cm x ${shipment.width || 'N/A'}cm x ${shipment.height || 'N/A'}cm</p>
-                        <p><strong style="color: #00ffff;">Weight:</strong> ${shipment.weight || 'N/A'} kg</p>
+                        <p><strong style="color: #00ffff;">Piece Type:</strong> ${shipment.pieceType || ''}</p>
+                        <p><strong style="color: #00ffff;">Product:</strong> ${shipment.product || ''}</p>
+                        <p><strong style="color: #00ffff;">Quantity:</strong> ${shipment.quantity || ''}</p>
+                        <p><strong style="color: #00ffff;">Description:</strong> ${shipment.description || ''}</p>
+                        <p><strong style="color: #00ffff;">Dimensions:</strong> ${shipment.length || ''}cm x ${shipment.width || ''}cm x ${shipment.height || ''}cm</p>
+                        <p><strong style="color: #00ffff;">Weight:</strong> ${shipment.weight || ''} kg</p>
                     </div>
 
                     <div class="form-section">
                         <h3>💳 Payment Information</h3>
-                        <p><strong style="color: #00ffff;">Payment Mode:</strong> ${shipment.paymentMode || 'N/A'}</p>
-                        <p><strong style="color: #00ffff;">Freight Cost:</strong> <span class="freight-cost">${freightCost}</span></p>
+                        <p><strong style="color: #00ffff;">Payment Mode:</strong> ${shipment.paymentMode || ''}</p>
+                        <p><strong style="color: #00ffff;">Freight Cost:</strong> ${freightDisplay}</p>
                     </div>
 
                     <div class="form-section">
@@ -2082,7 +1972,6 @@
             const registerModal = document.getElementById('registerModal');
             const viewModal = document.getElementById('viewShipmentModal');
             const statusModal = document.getElementById('updateStatusModal');
-            const remarkModal = document.getElementById('addRemarkModal');
             const freightModal = document.getElementById('freightCostModal');
             
             if (event.target === registerModal) {
@@ -2093,9 +1982,6 @@
             }
             if (event.target === statusModal) {
                 closeStatusModal();
-            }
-            if (event.target === remarkModal) {
-                closeRemarkModal();
             }
             if (event.target === freightModal) {
                 closeFreightCostModal();

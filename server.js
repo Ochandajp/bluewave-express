@@ -49,58 +49,70 @@ const userSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 });
 
-// Enhanced Shipment Schema with freight cost and sender information
+// Shipment Schema - COMPLETE with all fields
 const shipmentSchema = new mongoose.Schema({
     trackingNumber: { type: String, unique: true, required: true },
     
-    // Sender Information (NEW)
-    senderName: { type: String, required: true },
-    senderEmail: String,
-    senderPhone: { type: String, required: true },
-    senderAddress: { type: String, required: true },
+    // Sender Information
+    senderName: { type: String, default: '' },
+    senderEmail: { type: String, default: '' },
+    senderPhone: { type: String, default: '' },
+    senderAddress: { type: String, default: '' },
     
     // Recipient Information
-    recipientName: { type: String, required: true },
-    recipientEmail: String,
-    recipientPhone: { type: String, required: true },
-    deliveryAddress: { type: String, required: true },
+    recipientName: { type: String, default: '' },
+    recipientEmail: { type: String, default: '' },
+    recipientPhone: { type: String, default: '' },
+    deliveryAddress: { type: String, default: '' },
     
     // Shipment Information
-    origin: { type: String, required: true },
-    destination: { type: String, required: true },
-    carrier: String,
-    carrierRef: String,
-    shipmentType: { type: String, enum: ['AIR', 'WATER', 'ROAD'], default: 'ROAD' },
-    product: String,
-    quantity: Number,
+    origin: { type: String, default: '' },
+    destination: { type: String, default: '' },
+    carrier: { type: String, default: '' },
+    shipmentType: { type: String, default: 'ROAD' },
+    
+    // Package Details
+    product: { type: String, default: '' },
+    quantity: { type: String, default: '' },
     pieceType: { type: String, default: '' },
     packageType: { type: String, default: '' },
     packageStatus: { type: String, default: '' },
     description: { type: String, default: '' },
-    length: Number,
-    width: Number,
-    height: Number,
-    weight: Number,
-    paymentMode: { type: String, enum: ['cash', 'bank transfer', 'card', 'mobile money'], default: 'cash' },
+    length: { type: String, default: '' },
+    width: { type: String, default: '' },
+    height: { type: String, default: '' },
+    weight: { type: String, default: '' },
+    
+    // Payment
+    paymentMode: { type: String, default: 'cash' },
     freightCost: { type: Number, default: 0 },
-    expectedDelivery: Date,
-    departureDate: Date,
-    pickupDate: Date,
-    departureTime: String,
+    
+    // Dates
+    expectedDelivery: { type: String, default: '' },
+    departureDate: { type: String, default: '' },
+    pickupDate: { type: String, default: '' },
+    
+    // Status
     status: { 
         type: String, 
         enum: ['pending', 'on hold', 'out for delivery', 'delivered'],
         default: 'pending'
     },
+    
+    // Remarks
     remark: { type: String, default: '' },
     comment: { type: String, default: '' },
+    
+    // Tracking History
     trackingHistory: [{
         status: String,
         location: String,
         message: String,
-        remark: { type: String, default: '' },
+        remark: String,
         timestamp: { type: Date, default: Date.now }
     }],
+    
+    // Metadata
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
@@ -432,21 +444,15 @@ app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
     }
 });
 
-// Create new shipment (UPDATED - Added sender fields)
+// Create new shipment - FIXED to save all data
 app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
     try {
-        console.log('Creating new shipment...');
+        console.log('📦 Creating new shipment...');
+        console.log('Received data:', JSON.stringify(req.body, null, 2));
         
         const shipmentData = { ...req.body };
         
-        // Validate required sender fields
-        if (!shipmentData.senderName || !shipmentData.senderPhone || !shipmentData.senderAddress) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Sender name, phone and address are required' 
-            });
-        }
-        
+        // Generate tracking number if not provided
         if (!shipmentData.trackingNumber) {
             let trackingNumber;
             let exists;
@@ -472,12 +478,81 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             status: shipmentData.status || 'pending',
             location: shipmentData.origin || 'Origin',
             message: 'Shipment created',
-            remark: shipmentData.comment || shipmentData.remark || 'Initial shipment registration',
+            remark: shipmentData.comment || 'Initial shipment registration',
             timestamp: new Date()
         }];
 
-        const shipment = new Shipment(shipmentData);
+        // Create the shipment with ALL data
+        const shipment = new Shipment({
+            trackingNumber: shipmentData.trackingNumber,
+            
+            // Sender Information
+            senderName: shipmentData.senderName || '',
+            senderEmail: shipmentData.senderEmail || '',
+            senderPhone: shipmentData.senderPhone || '',
+            senderAddress: shipmentData.senderAddress || '',
+            
+            // Recipient Information
+            recipientName: shipmentData.recipientName || '',
+            recipientEmail: shipmentData.recipientEmail || '',
+            recipientPhone: shipmentData.recipientPhone || '',
+            deliveryAddress: shipmentData.deliveryAddress || '',
+            
+            // Shipment Information
+            origin: shipmentData.origin || '',
+            destination: shipmentData.destination || '',
+            carrier: shipmentData.carrier || '',
+            shipmentType: shipmentData.shipmentType || 'ROAD',
+            
+            // Package Details
+            product: shipmentData.product || '',
+            quantity: shipmentData.quantity || '',
+            pieceType: shipmentData.pieceType || '',
+            packageType: shipmentData.packageType || '',
+            packageStatus: shipmentData.packageStatus || '',
+            description: shipmentData.description || '',
+            length: shipmentData.length || '',
+            width: shipmentData.width || '',
+            height: shipmentData.height || '',
+            weight: shipmentData.weight || '',
+            
+            // Payment
+            paymentMode: shipmentData.paymentMode || 'cash',
+            freightCost: shipmentData.freightCost || 0,
+            
+            // Dates
+            expectedDelivery: shipmentData.expectedDelivery || '',
+            departureDate: shipmentData.departureDate || '',
+            pickupDate: shipmentData.pickupDate || '',
+            
+            // Status
+            status: shipmentData.status || 'pending',
+            
+            // Remarks
+            remark: shipmentData.comment || '',
+            comment: shipmentData.comment || '',
+            
+            // Tracking History
+            trackingHistory: shipmentData.trackingHistory,
+            
+            // Metadata
+            createdBy: shipmentData.createdBy,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        });
+
         await shipment.save();
+        
+        console.log('✅ Shipment saved successfully!');
+        console.log('Saved data:', {
+            trackingNumber: shipment.trackingNumber,
+            senderName: shipment.senderName,
+            senderPhone: shipment.senderPhone,
+            senderAddress: shipment.senderAddress,
+            packageType: shipment.packageType,
+            packageStatus: shipment.packageStatus,
+            departureDate: shipment.departureDate
+        });
 
         res.status(201).json({ 
             success: true,
@@ -486,10 +561,10 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             shipmentId: shipment._id
         });
     } catch (error) {
-        console.error('Create shipment error:', error);
+        console.error('❌ Create shipment error:', error);
         res.status(500).json({ 
             success: false,
-            message: 'Error creating shipment' 
+            message: 'Error creating shipment: ' + error.message 
         });
     }
 });
@@ -498,6 +573,7 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
 app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
     try {
         const shipments = await Shipment.find().sort({ createdAt: -1 }).populate('createdBy', 'username');
+        console.log(`📋 Found ${shipments.length} shipments`);
         res.json({
             success: true,
             shipments
@@ -556,7 +632,6 @@ app.put('/api/admin/shipments/:id/status', authenticate, isAdmin, async (req, re
 
         shipment.status = status || shipment.status;
         
-        // Add to tracking history
         shipment.trackingHistory.push({
             status: shipment.status,
             location: location || shipment.origin || 'Unknown',
@@ -565,7 +640,6 @@ app.put('/api/admin/shipments/:id/status', authenticate, isAdmin, async (req, re
             timestamp: new Date()
         });
 
-        // Also update main remark field
         shipment.remark = remark;
         shipment.comment = remark;
         shipment.updatedAt = new Date();
@@ -581,56 +655,6 @@ app.put('/api/admin/shipments/:id/status', authenticate, isAdmin, async (req, re
         res.status(500).json({ 
             success: false,
             message: 'Error updating shipment status' 
-        });
-    }
-});
-
-// Add remark without changing status
-app.post('/api/admin/shipments/:id/remark', authenticate, isAdmin, async (req, res) => {
-    try {
-        const { remark, location, message } = req.body;
-        
-        console.log('Adding remark to shipment:', req.params.id);
-        console.log('Remark data:', { remark, location, message });
-
-        if (!remark || remark.trim() === '') {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Remark is required' 
-            });
-        }
-
-        const shipment = await Shipment.findById(req.params.id);
-        if (!shipment) {
-            return res.status(404).json({ 
-                success: false,
-                message: 'Shipment not found' 
-            });
-        }
-
-        // Add remark to tracking history
-        shipment.trackingHistory.push({
-            status: shipment.status,
-            location: location || shipment.origin || 'Unknown',
-            message: message || 'Remark added',
-            remark: remark,
-            timestamp: new Date()
-        });
-
-        shipment.updatedAt = new Date();
-        await shipment.save();
-
-        console.log('Remark added successfully to shipment:', req.params.id);
-
-        res.json({ 
-            success: true,
-            message: 'Remark added successfully'
-        });
-    } catch (error) {
-        console.error('Error adding remark:', error);
-        res.status(500).json({ 
-            success: false,
-            message: 'Error adding remark: ' + error.message 
         });
     }
 });
@@ -725,6 +749,27 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
     }
 });
 
+// Debug route to check data
+app.get('/api/debug/shipments', authenticate, isAdmin, async (req, res) => {
+    try {
+        const shipments = await Shipment.find().lean().limit(5);
+        res.json({
+            success: true,
+            count: shipments.length,
+            shipments: shipments.map(s => ({
+                id: s._id,
+                tracking: s.trackingNumber,
+                senderName: s.senderName,
+                senderPhone: s.senderPhone,
+                packageType: s.packageType,
+                departureDate: s.departureDate
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // ============= ERROR HANDLING =============
 
 app.use((req, res) => {
@@ -754,7 +799,8 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🔧 Setup Admin: http://localhost:${PORT}/api/setup-admin`);
     console.log(`🔑 Login: http://localhost:${PORT}/api/login (POST)`);
     console.log(`📦 Public Tracking: http://localhost:${PORT}`);
-    console.log(`👤 Admin Panel: http://localhost:${PORT}/admin\n`);
+    console.log(`👤 Admin Panel: http://localhost:${PORT}/admin`);
+    console.log(`🔍 Debug: http://localhost:${PORT}/api/debug/shipments (need auth)\n`);
 });
 
 process.on('SIGTERM', () => {
