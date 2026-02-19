@@ -24,13 +24,7 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "keywords": [
-    "shipping",
-    "cargo",
-    "tracking",
-    "logistics",
-    "admin"
-  ],
+  "keywords": ["shipping", "cargo", "tracking", "logistics", "admin"],
   "author": "Bluewave Express Cargo",
   "license": "MIT"
 }

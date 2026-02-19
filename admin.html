@@ -322,27 +322,7 @@
         .freight-cost {
             color: #00ff00;
             font-weight: bold;
-            font-size: 1.1rem;
         }
-
-        .freight-cost-zero {
-            color: #ffa500;
-            font-weight: bold;
-        }
-
-        .payment-mode {
-            padding: 0.3rem 1rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            display: inline-block;
-        }
-
-        .payment-cash { background: #00ff0033; color: #00ff00; border: 1px solid #00ff00; }
-        .payment-bank { background: #00ffff33; color: #00ffff; border: 1px solid #00ffff; }
-        .payment-card { background: #ff00ff33; color: #ff00ff; border: 1px solid #ff00ff; }
-        .payment-mobile { background: #ffa50033; color: #ffa500; border: 1px solid #ffa500; }
-        .payment-freight { background: #ff444433; color: #ff4444; border: 1px solid #ff4444; }
 
         .action-buttons {
             display: flex;
@@ -706,16 +686,10 @@
             margin-top: 0.3rem;
         }
 
-        .amount-input {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .amount-input span {
-            color: #00ffff;
-            font-size: 1.2rem;
-            font-weight: bold;
+        .shipment-id {
+            color: #ff00ff;
+            font-size: 0.8rem;
+            font-family: monospace;
         }
 
         @media (max-width: 768px) {
@@ -861,11 +835,7 @@
             </div>
             <div class="form-group">
                 <label class="required-field">Freight Cost (£)</label>
-                <div class="amount-input">
-                    <span>£</span>
-                    <input type="number" id="freightCostInput" step="0.01" min="0" placeholder="0.00" value="0.00">
-                </div>
-                <small style="color: #888;">Enter the new freight cost amount</small>
+                <input type="number" id="freightCost" step="0.01" min="0" placeholder="Enter freight cost">
             </div>
             <button class="btn-submit" onclick="submitFreightCost()">Update Cost</button>
             <div class="error-message" id="freightError"></div>
@@ -943,18 +913,19 @@
                         <table>
                             <thead>
                                 <tr>
+                                    <th>ID</th>
                                     <th>Tracking #</th>
+                                    <th>Sender</th>
                                     <th>Recipient</th>
-                                    <th>Origin</th>
-                                    <th>Destination</th>
+                                    <th>Origin → Destination</th>
                                     <th>Status</th>
-                                    <th>Freight Cost</th>
+                                    <th>Freight</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="recentShipmentsTable">
                                 <tr>
-                                    <td colspan="7" style="text-align: center;">No recent shipments</td>
+                                    <td colspan="8" style="text-align: center;">No recent shipments</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -969,7 +940,7 @@
                     </div>
 
                     <div class="search-bar">
-                        <input type="text" class="search-input" id="shipmentSearch" placeholder="Search by tracking number or recipient...">
+                        <input type="text" class="search-input" id="shipmentSearch" placeholder="Search by tracking number, sender or recipient...">
                         <select class="filter-select" id="statusFilter">
                             <option value="all">All Status</option>
                             <option value="pending">Pending</option>
@@ -984,7 +955,9 @@
                         <table>
                             <thead>
                                 <tr>
+                                    <th>ID</th>
                                     <th>Tracking #</th>
+                                    <th>Sender</th>
                                     <th>Recipient</th>
                                     <th>Route</th>
                                     <th>Status</th>
@@ -994,14 +967,14 @@
                             </thead>
                             <tbody id="shipmentsTableBody">
                                 <tr>
-                                    <td colspan="6" style="text-align: center;">Loading shipments...</td>
+                                    <td colspan="8" style="text-align: center;">Loading shipments...</td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Create Shipment Section -->
+                <!-- Create Shipment Section (UPDATED - Added sender fields) -->
                 <div id="createSectionContent" style="display: none;">
                     <div class="section-header">
                         <h2 class="section-title">Create New Shipment</h2>
@@ -1046,24 +1019,47 @@
                                 </div>
                             </div>
 
+                            <!-- Sender Information (NEW) -->
+                            <div class="form-section">
+                                <h3>📤 Sender Information</h3>
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="required-field">Sender Name</label>
+                                        <input type="text" id="senderName" required placeholder="Enter sender full name">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Sender Email</label>
+                                        <input type="email" id="senderEmail" placeholder="sender@email.com">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="required-field">Sender Phone</label>
+                                        <input type="tel" id="senderPhone" required placeholder="+1234567890">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="required-field">Sender Address</label>
+                                        <textarea id="senderAddress" rows="2" required placeholder="Full sender address"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
                             <!-- Recipient Information -->
                             <div class="form-section">
                                 <h3>👤 Recipient Information</h3>
                                 <div class="form-grid">
                                     <div class="form-group">
-                                        <label class="required-field">Full Name</label>
+                                        <label class="required-field">Recipient Name</label>
                                         <input type="text" id="recipientName" required placeholder="Enter recipient name">
                                     </div>
                                     <div class="form-group">
-                                        <label>Email</label>
+                                        <label>Recipient Email</label>
                                         <input type="email" id="recipientEmail" placeholder="recipient@email.com">
                                     </div>
                                     <div class="form-group">
-                                        <label class="required-field">Phone</label>
+                                        <label class="required-field">Recipient Phone</label>
                                         <input type="tel" id="recipientPhone" required placeholder="+1234567890">
                                     </div>
                                     <div class="form-group">
-                                        <label class="required-field">Address</label>
+                                        <label class="required-field">Delivery Address</label>
                                         <textarea id="deliveryAddress" rows="2" required placeholder="Full delivery address"></textarea>
                                     </div>
                                 </div>
@@ -1159,16 +1155,11 @@
                                             <option value="bank transfer">Bank Transfer</option>
                                             <option value="card">Card</option>
                                             <option value="mobile money">Mobile Money</option>
-                                            <option value="freight">Freight Cost (Collect on Delivery)</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
-                                        <label class="required-field">Freight Cost (£)</label>
-                                        <div class="amount-input">
-                                            <span>£</span>
-                                            <input type="number" id="createFreightCost" step="0.01" min="0" placeholder="0.00" value="0.00" required>
-                                        </div>
-                                        <small style="color: #888;">Enter the freight cost amount (e.g., 150.00)</small>
+                                        <label>Freight Cost (£)</label>
+                                        <input type="number" id="freightCost" step="0.01" min="0" placeholder="0.00">
                                     </div>
                                     <div class="form-group">
                                         <label>Expected Delivery</label>
@@ -1185,7 +1176,7 @@
         </div>
     </div>
 
-    <!-- View Shipment Modal -->
+    <!-- View Shipment Modal (UPDATED - Added sender information) -->
     <div class="modal" id="viewShipmentModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1193,7 +1184,7 @@
                 <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
                     <button class="btn-primary" onclick="showUpdateStatusModalFromView()">Update Status</button>
                     <button class="btn-warning" onclick="showAddRemarkModalFromView()">Add Remark</button>
-                    <button class="btn-cost" onclick="showFreightCostModalFromView()">Update Cost</button>
+                    <button class="btn-cost" onclick="showFreightCostModalFromView()">Set Cost</button>
                     <span class="close-modal" onclick="closeViewModal()">&times;</span>
                 </div>
             </div>
@@ -1205,162 +1196,11 @@
 
     <script>
         // ============= CONFIGURATION =============
-        const API_URL = window.location.hostname === 'localhost' ? 'http://localhost:5000' : 'https://bluewave-express-cargo.onrender.com';
+        const API_URL = 'https://bluewave-express-cargo.onrender.com';
 
         // ============= GLOBAL VARIABLES =============
         let currentShipmentId = null;
         let currentViewShipmentId = null;
-
-        // ============= FORMAT FREIGHT COST - FIXED =============
-        function formatFreightCost(cost) {
-            // Handle undefined, null, or empty values
-            if (cost === undefined || cost === null || cost === '') {
-                return '£0.00';
-            }
-            
-            // Convert to number if it's a string
-            const numCost = typeof cost === 'string' ? parseFloat(cost) : cost;
-            
-            // Check if it's a valid number
-            if (isNaN(numCost)) {
-                return '£0.00';
-            }
-            
-            // Format with 2 decimal places
-            return '£' + numCost.toFixed(2);
-        }
-
-        // ============= GET FREIGHT COST CLASS - FIXED =============
-        function getFreightCostClass(cost) {
-            // Handle undefined, null, or empty values
-            if (cost === undefined || cost === null || cost === '') {
-                return 'freight-cost-zero';
-            }
-            
-            // Convert to number if it's a string
-            const numCost = typeof cost === 'string' ? parseFloat(cost) : cost;
-            
-            // Check if it's zero or invalid
-            if (isNaN(numCost) || numCost === 0) {
-                return 'freight-cost-zero';
-            }
-            
-            return 'freight-cost';
-        }
-
-        // ============= SHOW FREIGHT COST MODAL - FIXED =============
-        function showFreightCostModal(shipmentId, currentCost) {
-            console.log('💰 Opening freight cost modal for shipment:', shipmentId);
-            console.log('💰 Current cost value:', currentCost);
-            
-            currentShipmentId = shipmentId;
-            
-            // Parse the current cost correctly
-            let costValue = 0;
-            if (currentCost !== undefined && currentCost !== null) {
-                // Remove any £ symbol and parse
-                const cleanCost = String(currentCost).replace('£', '').trim();
-                costValue = parseFloat(cleanCost) || 0;
-            }
-            
-            console.log('💰 Setting input value to:', costValue.toFixed(2));
-            
-            document.getElementById('freightCostInput').value = costValue.toFixed(2);
-            document.getElementById('freightError').classList.remove('active');
-            document.getElementById('freightCostModal').classList.add('active');
-        }
-
-        function showFreightCostModalFromView() {
-            if (currentViewShipmentId) {
-                const costElement = document.querySelector('#viewShipmentDetails .freight-cost, #viewShipmentDetails .freight-cost-zero');
-                let currentCost = '0';
-                if (costElement) {
-                    const costText = costElement.textContent;
-                    currentCost = costText.replace('£', '');
-                }
-                showFreightCostModal(currentViewShipmentId, currentCost);
-            }
-        }
-
-        function closeFreightCostModal() {
-            document.getElementById('freightCostModal').classList.remove('active');
-            document.getElementById('freightCostInput').value = '0.00';
-            currentShipmentId = null;
-        }
-
-        // ============= SUBMIT FREIGHT COST - FIXED =============
-        async function submitFreightCost() {
-            const freightCost = parseFloat(document.getElementById('freightCostInput').value);
-            const errorEl = document.getElementById('freightError');
-
-            console.log('💰 Submitting freight cost update:', freightCost);
-            console.log('📦 Current shipment ID:', currentShipmentId);
-
-            errorEl.classList.remove('active');
-
-            // Validate input
-            if (isNaN(freightCost) || freightCost < 0) {
-                errorEl.textContent = 'Please enter a valid freight cost';
-                errorEl.classList.add('active');
-                return;
-            }
-
-            if (!currentShipmentId) {
-                errorEl.textContent = 'Shipment ID not found';
-                errorEl.classList.add('active');
-                return;
-            }
-
-            setLoading(true);
-
-            try {
-                const token = localStorage.getItem('token');
-                const url = `${API_URL}/api/admin/shipments/${currentShipmentId}/freight`;
-                
-                console.log('🌐 Making request to:', url);
-                console.log('📤 Sending data:', { freightCost });
-
-                const response = await fetch(url, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ freightCost })
-                });
-
-                console.log('📥 Response status:', response.status);
-
-                const data = await response.json();
-                console.log('📥 Response data:', data);
-
-                if (response.ok && data.success) {
-                    showSuccess(`Freight cost updated to £${freightCost.toFixed(2)}`);
-                    closeFreightCostModal();
-                    
-                    // Refresh data
-                    console.log('🔄 Refreshing shipments...');
-                    await loadShipments();
-                    
-                    // Update view modal if open
-                    if (document.getElementById('viewShipmentModal').classList.contains('active') && 
-                        currentViewShipmentId === currentShipmentId) {
-                        console.log('🔄 Refreshing view modal...');
-                        await viewShipment(currentShipmentId);
-                    }
-                } else {
-                    console.error('❌ Update failed:', data);
-                    errorEl.textContent = data.message || 'Failed to update freight cost';
-                    errorEl.classList.add('active');
-                }
-            } catch (error) {
-                console.error('❌ Network error:', error);
-                errorEl.textContent = 'Network error: ' + error.message;
-                errorEl.classList.add('active');
-            } finally {
-                setLoading(false);
-            }
-        }
 
         // ============= CHARACTER COUNTERS =============
         document.addEventListener('DOMContentLoaded', function() {
@@ -1446,24 +1286,25 @@
             currentShipmentId = null;
         }
 
-        // ============= GET PAYMENT MODE CLASS =============
-        function getPaymentModeClass(mode) {
-            switch(mode?.toLowerCase()) {
-                case 'cash': return 'payment-cash';
-                case 'bank transfer': return 'payment-bank';
-                case 'card': return 'payment-card';
-                case 'mobile money': return 'payment-mobile';
-                case 'freight': return 'payment-freight';
-                default: return 'payment-cash';
+        // ============= FREIGHT COST MODAL FUNCTIONS =============
+        function showFreightCostModal(shipmentId, currentCost) {
+            currentShipmentId = shipmentId;
+            document.getElementById('freightCost').value = currentCost || '';
+            document.getElementById('freightError').classList.remove('active');
+            document.getElementById('freightCostModal').classList.add('active');
+        }
+
+        function showFreightCostModalFromView() {
+            if (currentViewShipmentId) {
+                const costElement = document.querySelector('#viewShipmentDetails .freight-cost');
+                const currentCost = costElement ? costElement.textContent.replace('£', '') : '';
+                showFreightCostModal(currentViewShipmentId, currentCost);
             }
         }
 
-        // ============= FORMAT PAYMENT MODE DISPLAY =============
-        function formatPaymentMode(mode) {
-            if (mode?.toLowerCase() === 'freight') {
-                return 'Freight Cost (COD)';
-            }
-            return mode || 'N/A';
+        function closeFreightCostModal() {
+            document.getElementById('freightCostModal').classList.remove('active');
+            currentShipmentId = null;
         }
 
         // ============= REGISTER FUNCTION =============
@@ -1660,29 +1501,35 @@
             }
         }
 
-        // ============= DISPLAY RECENT SHIPMENTS =============
+        // ============= DISPLAY RECENT SHIPMENTS (UPDATED - Added ID and sender) =============
         function displayRecentShipments(shipments) {
             const tbody = document.getElementById('recentShipmentsTable');
             
             if (!shipments || shipments.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No recent shipments</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No recent shipments</td></tr>';
                 return;
             }
 
             let html = '';
             shipments.slice(0, 5).forEach(s => {
                 const statusClass = s.status ? s.status.toLowerCase().replace(/ /g, '') : 'pending';
-                const freightDisplay = formatFreightCost(s.freightCost);
-                const freightClass = getFreightCostClass(s.freightCost);
+                // Properly display freight cost
+                const freightCost = (s.freightCost !== undefined && s.freightCost !== null && s.freightCost > 0) 
+                    ? `£${s.freightCost.toFixed(2)}` 
+                    : (s.freightCost === 0 ? '£0.00' : 'TBA');
+                
+                // Shorten IDs for display
+                const shortId = s._id ? s._id.toString().substring(0, 8) + '...' : 'N/A';
                 
                 html += `
                     <tr>
+                        <td><span class="shipment-id" title="${s._id}">${shortId}</span></td>
                         <td>${s.trackingNumber || 'N/A'}</td>
+                        <td>${s.senderName || 'N/A'}</td>
                         <td>${s.recipientName || 'N/A'}</td>
-                        <td>${s.origin || 'N/A'}</td>
-                        <td>${s.destination || 'N/A'}</td>
+                        <td>${s.origin || 'N/A'} → ${s.destination || 'N/A'}</td>
                         <td><span class="status-badge status-${statusClass}">${s.status || 'Pending'}</span></td>
-                        <td class="${freightClass}">${freightDisplay}</td>
+                        <td class="freight-cost">${freightCost}</td>
                         <td>
                             <button class="action-btn btn-view" onclick="viewShipment('${s._id}')">View</button>
                         </td>
@@ -1720,33 +1567,40 @@
             }
         }
 
-        // ============= DISPLAY SHIPMENTS =============
+        // ============= DISPLAY SHIPMENTS (UPDATED - Added ID and sender) =============
         function displayShipments(shipments) {
             const tbody = document.getElementById('shipmentsTableBody');
             
             if (!shipments || shipments.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No shipments found</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">No shipments found</td></tr>';
                 return;
             }
 
             let html = '';
             shipments.forEach(s => {
                 const statusClass = s.status ? s.status.toLowerCase().replace(/ /g, '') : 'pending';
-                const freightDisplay = formatFreightCost(s.freightCost);
-                const freightClass = getFreightCostClass(s.freightCost);
+                // Properly display freight cost
+                const freightCost = (s.freightCost !== undefined && s.freightCost !== null && s.freightCost > 0) 
+                    ? `£${s.freightCost.toFixed(2)}` 
+                    : (s.freightCost === 0 ? '£0.00' : 'TBA');
+                
+                // Shorten IDs for display
+                const shortId = s._id ? s._id.toString().substring(0, 8) + '...' : 'N/A';
                 
                 html += `
                     <tr>
+                        <td><span class="shipment-id" title="${s._id}">${shortId}</span></td>
                         <td>${s.trackingNumber || 'N/A'}</td>
+                        <td>${s.senderName || 'N/A'}</td>
                         <td>${s.recipientName || 'N/A'}</td>
                         <td>${s.origin || 'N/A'} → ${s.destination || 'N/A'}</td>
                         <td><span class="status-badge status-${statusClass}">${s.status || 'Pending'}</span></td>
-                        <td class="${freightClass}">${freightDisplay}</td>
+                        <td class="freight-cost">${freightCost}</td>
                         <td class="action-buttons">
                             <button class="action-btn btn-view" onclick="viewShipment('${s._id}')">View</button>
                             <button class="action-btn btn-track" onclick="showUpdateStatusModal('${s._id}', '${s.status || 'pending'}')">Status</button>
                             <button class="action-btn btn-remark" onclick="showAddRemarkModal('${s._id}')">Remark</button>
-                            <button class="action-btn btn-cost" onclick="showFreightCostModal('${s._id}', ${s.freightCost})">Cost</button>
+                            <button class="action-btn btn-cost" onclick="showFreightCostModal('${s._id}', '${s.freightCost || ''}')">Cost</button>
                             <button class="action-btn btn-delete" onclick="deleteShipment('${s._id}')">Delete</button>
                         </td>
                     </tr>
@@ -1761,45 +1615,53 @@
             loadShipments();
         }
 
-        // ============= CREATE SHIPMENT =============
+        // ============= CREATE SHIPMENT (UPDATED - Added sender fields) =============
         async function createShipment() {
             const comment = document.getElementById('comment').value;
-            const freightCost = document.getElementById('createFreightCost').value;
 
             if (!comment || comment.trim() === '') {
                 showError('Initial remarks are required');
                 return;
             }
 
-            if (!freightCost || freightCost === '') {
-                showError('Freight cost is required');
-                return;
-            }
+            // Validate sender fields
+            const senderName = document.getElementById('senderName').value;
+            const senderPhone = document.getElementById('senderPhone').value;
+            const senderAddress = document.getElementById('senderAddress').value;
 
-            const freightCostNum = parseFloat(freightCost);
-            if (isNaN(freightCostNum) || freightCostNum < 0) {
-                showError('Please enter a valid freight cost');
+            if (!senderName || !senderPhone || !senderAddress) {
+                showError('Sender name, phone and address are required');
                 return;
             }
 
             const shipmentData = {
+                // Sender Information
+                senderName: senderName,
+                senderEmail: document.getElementById('senderEmail').value,
+                senderPhone: senderPhone,
+                senderAddress: senderAddress,
+                
+                // Shipment Details
                 departureDate: document.getElementById('departureDate').value || null,
                 pickupDate: document.getElementById('pickupDate').value || null,
                 packageType: document.getElementById('packageType').value,
                 packageStatus: document.getElementById('packageStatus').value,
                 comment: comment,
                 
+                // Recipient Information
                 recipientName: document.getElementById('recipientName').value,
                 recipientEmail: document.getElementById('recipientEmail').value,
                 recipientPhone: document.getElementById('recipientPhone').value,
                 deliveryAddress: document.getElementById('deliveryAddress').value,
                 
+                // Shipment Information
                 origin: document.getElementById('origin').value,
                 destination: document.getElementById('destination').value,
                 carrier: document.getElementById('carrier').value,
                 shipmentType: document.getElementById('shipmentType').value,
                 status: document.getElementById('status').value,
                 
+                // Package Details
                 pieceType: document.getElementById('pieceType').value,
                 product: document.getElementById('product').value,
                 quantity: document.getElementById('quantity').value ? parseInt(document.getElementById('quantity').value) : null,
@@ -1809,8 +1671,9 @@
                 height: document.getElementById('height').value ? parseFloat(document.getElementById('height').value) : null,
                 weight: document.getElementById('weight').value ? parseFloat(document.getElementById('weight').value) : null,
                 
+                // Payment & Freight
                 paymentMode: document.getElementById('paymentMode').value,
-                freightCost: freightCostNum,
+                freightCost: document.getElementById('freightCost').value ? parseFloat(document.getElementById('freightCost').value) : 0,
                 expectedDelivery: document.getElementById('expectedDelivery').value || null,
                 
                 trackingNumber: document.getElementById('trackingNumber').value || null,
@@ -1841,15 +1704,8 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
-                    showSuccess(`Shipment created successfully! Tracking: ${data.trackingNumber} with freight cost: £${freightCostNum.toFixed(2)}`);
+                    showSuccess(`Shipment created successfully! Tracking: ${data.trackingNumber} (ID: ${data.shipmentId})`);
                     document.getElementById('shipmentForm').reset();
-                    
-                    // Reset the freight cost field specifically
-                    document.getElementById('createFreightCost').value = '0.00';
-                    
-                    // Generate new tracking number
-                    generateTrackingNumber();
-                    
                     setTimeout(() => showSection('shipments'), 2000);
                 } else {
                     showError(data.message || 'Failed to create shipment');
@@ -1955,7 +1811,10 @@
 
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/api/admin/shipments/${currentShipmentId}/remark`, {
+                const url = `${API_URL}/api/admin/shipments/${currentShipmentId}/remark`;
+                console.log('Sending remark to:', url);
+                
+                const response = await fetch(url, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -1969,6 +1828,7 @@
                 });
 
                 const data = await response.json();
+                console.log('Remark response:', data);
 
                 if (response.ok && data.success) {
                     showSuccess('Remark added successfully');
@@ -1983,6 +1843,60 @@
                 }
             } catch (error) {
                 console.error('Error adding remark:', error);
+                errorEl.textContent = 'Network error: ' + error.message;
+                errorEl.classList.add('active');
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        // ============= SUBMIT FREIGHT COST =============
+        async function submitFreightCost() {
+            const freightCost = parseFloat(document.getElementById('freightCost').value);
+            const errorEl = document.getElementById('freightError');
+
+            errorEl.classList.remove('active');
+
+            if (isNaN(freightCost) || freightCost < 0) {
+                errorEl.textContent = 'Please enter a valid freight cost';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            if (!currentShipmentId) {
+                errorEl.textContent = 'Shipment ID not found';
+                errorEl.classList.add('active');
+                return;
+            }
+
+            setLoading(true);
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/api/admin/shipments/${currentShipmentId}/freight`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ freightCost })
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showSuccess('Freight cost updated successfully');
+                    closeFreightCostModal();
+                    loadShipments();
+                    if (document.getElementById('viewShipmentModal').classList.contains('active') && currentViewShipmentId === currentShipmentId) {
+                        viewShipment(currentShipmentId);
+                    }
+                } else {
+                    errorEl.textContent = data.message || 'Failed to update freight cost';
+                    errorEl.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error updating freight cost:', error);
                 errorEl.textContent = 'Network error';
                 errorEl.classList.add('active');
             } finally {
@@ -2019,7 +1933,7 @@
             }
         }
 
-        // ============= DISPLAY SHIPMENT DETAILS =============
+        // ============= DISPLAY SHIPMENT DETAILS (UPDATED - Added sender information) =============
         function displayShipmentDetails(shipment) {
             const detailsDiv = document.getElementById('viewShipmentDetails');
             
@@ -2053,21 +1967,31 @@
             const pickupDate = shipment.pickupDate ? new Date(shipment.pickupDate).toLocaleDateString() : 'N/A';
             const expectedDelivery = shipment.expectedDelivery ? new Date(shipment.expectedDelivery).toLocaleDateString() : 'N/A';
             const statusClass = shipment.status ? shipment.status.toLowerCase().replace(/ /g, '') : 'pending';
-            const freightDisplay = formatFreightCost(shipment.freightCost);
-            const freightClass = getFreightCostClass(shipment.freightCost);
-            const paymentClass = getPaymentModeClass(shipment.paymentMode);
-            const paymentDisplay = formatPaymentMode(shipment.paymentMode);
+            
+            // Properly display freight cost
+            const freightCost = (shipment.freightCost !== undefined && shipment.freightCost !== null && shipment.freightCost > 0) 
+                ? `£${shipment.freightCost.toFixed(2)}` 
+                : (shipment.freightCost === 0 ? '£0.00' : 'To be advised');
 
             detailsDiv.innerHTML = `
                 <div style="display: grid; gap: 1.5rem;">
                     <div class="form-section">
                         <h3>📦 Shipment Details</h3>
+                        <p><strong style="color: #00ffff;">Shipment ID:</strong> <span class="shipment-id">${shipment._id || 'N/A'}</span></p>
                         <p><strong style="color: #00ffff;">Tracking Number:</strong> ${shipment.trackingNumber || 'N/A'}</p>
                         <p><strong style="color: #00ffff;">Status:</strong> <span class="status-badge status-${statusClass}">${shipment.status || 'Pending'}</span></p>
                         <p><strong style="color: #00ffff;">Departure Date:</strong> ${departureDate}</p>
                         <p><strong style="color: #00ffff;">Pickup Date:</strong> ${pickupDate}</p>
                         <p><strong style="color: #00ffff;">Package Type:</strong> ${shipment.packageType || 'N/A'}</p>
                         <p><strong style="color: #00ffff;">Package Status:</strong> ${shipment.packageStatus || 'N/A'}</p>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>📤 Sender Information</h3>
+                        <p><strong style="color: #00ffff;">Name:</strong> ${shipment.senderName || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Email:</strong> ${shipment.senderEmail || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Phone:</strong> ${shipment.senderPhone || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Address:</strong> ${shipment.senderAddress || 'N/A'}</p>
                     </div>
 
                     <div class="form-section">
@@ -2099,9 +2023,8 @@
 
                     <div class="form-section">
                         <h3>💳 Payment Information</h3>
-                        <p><strong style="color: #00ffff;">Payment Mode:</strong> <span class="payment-mode ${paymentClass}">${paymentDisplay}</span></p>
-                        <p><strong style="color: #00ffff;">Freight Cost:</strong> <span class="${freightClass}">${freightDisplay}</span></p>
-                        ${shipment.paymentMode === 'freight' ? '<p><small style="color: #ffa500;">⚠️ Freight charges to be collected upon delivery</small></p>' : ''}
+                        <p><strong style="color: #00ffff;">Payment Mode:</strong> ${shipment.paymentMode || 'N/A'}</p>
+                        <p><strong style="color: #00ffff;">Freight Cost:</strong> <span class="freight-cost">${freightCost}</span></p>
                     </div>
 
                     <div class="form-section">

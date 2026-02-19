@@ -49,13 +49,23 @@ const userSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 });
 
-// Enhanced Shipment Schema with freight cost
+// Enhanced Shipment Schema with freight cost and sender information
 const shipmentSchema = new mongoose.Schema({
     trackingNumber: { type: String, unique: true, required: true },
+    
+    // Sender Information (NEW)
+    senderName: { type: String, required: true },
+    senderEmail: String,
+    senderPhone: { type: String, required: true },
+    senderAddress: { type: String, required: true },
+    
+    // Recipient Information
     recipientName: { type: String, required: true },
     recipientEmail: String,
     recipientPhone: { type: String, required: true },
     deliveryAddress: { type: String, required: true },
+    
+    // Shipment Information
     origin: { type: String, required: true },
     destination: { type: String, required: true },
     carrier: String,
@@ -71,8 +81,8 @@ const shipmentSchema = new mongoose.Schema({
     width: Number,
     height: Number,
     weight: Number,
-    paymentMode: { type: String, enum: ['cash', 'bank transfer', 'card', 'mobile money', 'freight'], default: 'cash' },
-    freightCost: { type: Number, default: 0, required: true },
+    paymentMode: { type: String, enum: ['cash', 'bank transfer', 'card', 'mobile money'], default: 'cash' },
+    freightCost: { type: Number, default: 0 },
     expectedDelivery: Date,
     departureDate: Date,
     pickupDate: Date,
@@ -409,13 +419,9 @@ app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
             });
         }
 
-        // Convert to object and ensure freightCost is a number
-        const processedShipment = shipment.toObject();
-        processedShipment.freightCost = Number(processedShipment.freightCost) || 0;
-
         res.json({
             success: true,
-            shipment: processedShipment
+            shipment
         });
     } catch (error) {
         console.error('Tracking error:', error);
@@ -426,13 +432,20 @@ app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
     }
 });
 
-// Create new shipment
+// Create new shipment (UPDATED - Added sender fields)
 app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
     try {
         console.log('Creating new shipment...');
-        console.log('Received data:', req.body);
         
         const shipmentData = { ...req.body };
+        
+        // Validate required sender fields
+        if (!shipmentData.senderName || !shipmentData.senderPhone || !shipmentData.senderAddress) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Sender name, phone and address are required' 
+            });
+        }
         
         if (!shipmentData.trackingNumber) {
             let trackingNumber;
@@ -454,18 +467,6 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
 
         shipmentData.createdBy = req.user.id;
 
-        // Ensure freightCost is a number
-        if (shipmentData.freightCost === undefined || shipmentData.freightCost === null || shipmentData.freightCost === '') {
-            shipmentData.freightCost = 0;
-        } else {
-            shipmentData.freightCost = parseFloat(shipmentData.freightCost);
-            if (isNaN(shipmentData.freightCost)) {
-                shipmentData.freightCost = 0;
-            }
-        }
-
-        console.log('Freight cost being saved:', shipmentData.freightCost);
-
         // Create initial tracking history
         shipmentData.trackingHistory = [{
             status: shipmentData.status || 'pending',
@@ -478,20 +479,17 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
         const shipment = new Shipment(shipmentData);
         await shipment.save();
 
-        console.log('Shipment created with freight cost:', shipment.freightCost);
-
         res.status(201).json({ 
             success: true,
             message: 'Shipment created successfully', 
             trackingNumber: shipment.trackingNumber,
-            freightCost: shipment.freightCost
+            shipmentId: shipment._id
         });
     } catch (error) {
         console.error('Create shipment error:', error);
         res.status(500).json({ 
             success: false,
-            message: 'Error creating shipment',
-            error: error.message 
+            message: 'Error creating shipment' 
         });
     }
 });
@@ -500,17 +498,9 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
 app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
     try {
         const shipments = await Shipment.find().sort({ createdAt: -1 }).populate('createdBy', 'username');
-        
-        // Process each shipment to ensure freightCost is a number
-        const processedShipments = shipments.map(s => {
-            const shipment = s.toObject();
-            shipment.freightCost = Number(shipment.freightCost) || 0;
-            return shipment;
-        });
-
         res.json({
             success: true,
-            shipments: processedShipments
+            shipments
         });
     } catch (error) {
         console.error('Error fetching shipments:', error);
@@ -531,14 +521,9 @@ app.get('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) => {
                 message: 'Shipment not found' 
             });
         }
-
-        // Convert to object and ensure freightCost is a number
-        const processedShipment = shipment.toObject();
-        processedShipment.freightCost = Number(processedShipment.freightCost) || 0;
-
         res.json({
             success: true,
-            shipment: processedShipment
+            shipment
         });
     } catch (error) {
         console.error('Error fetching shipment:', error);
@@ -580,6 +565,7 @@ app.put('/api/admin/shipments/:id/status', authenticate, isAdmin, async (req, re
             timestamp: new Date()
         });
 
+        // Also update main remark field
         shipment.remark = remark;
         shipment.comment = remark;
         shipment.updatedAt = new Date();
@@ -604,6 +590,9 @@ app.post('/api/admin/shipments/:id/remark', authenticate, isAdmin, async (req, r
     try {
         const { remark, location, message } = req.body;
         
+        console.log('Adding remark to shipment:', req.params.id);
+        console.log('Remark data:', { remark, location, message });
+
         if (!remark || remark.trim() === '') {
             return res.status(400).json({ 
                 success: false, 
@@ -619,6 +608,7 @@ app.post('/api/admin/shipments/:id/remark', authenticate, isAdmin, async (req, r
             });
         }
 
+        // Add remark to tracking history
         shipment.trackingHistory.push({
             status: shipment.status,
             location: location || shipment.origin || 'Unknown',
@@ -630,6 +620,8 @@ app.post('/api/admin/shipments/:id/remark', authenticate, isAdmin, async (req, r
         shipment.updatedAt = new Date();
         await shipment.save();
 
+        console.log('Remark added successfully to shipment:', req.params.id);
+
         res.json({ 
             success: true,
             message: 'Remark added successfully'
@@ -638,87 +630,38 @@ app.post('/api/admin/shipments/:id/remark', authenticate, isAdmin, async (req, r
         console.error('Error adding remark:', error);
         res.status(500).json({ 
             success: false,
-            message: 'Error adding remark' 
+            message: 'Error adding remark: ' + error.message 
         });
     }
 });
 
-// Update freight cost - FIXED
+// Update freight cost
 app.put('/api/admin/shipments/:id/freight', authenticate, isAdmin, async (req, res) => {
     try {
         const { freightCost } = req.body;
-        const shipmentId = req.params.id;
         
-        console.log('🔄 Updating freight cost for shipment:', shipmentId);
-        console.log('💰 Freight cost value received:', freightCost);
-
-        // Validate input
-        if (freightCost === undefined || freightCost === null) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Freight cost is required' 
-            });
-        }
-
-        // Parse the cost
-        const parsedCost = parseFloat(freightCost);
-        if (isNaN(parsedCost) || parsedCost < 0) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Invalid freight cost value' 
-            });
-        }
-
-        // Find the shipment
-        const shipment = await Shipment.findById(shipmentId);
+        const shipment = await Shipment.findById(req.params.id);
         if (!shipment) {
-            console.log('❌ Shipment not found:', shipmentId);
             return res.status(404).json({ 
                 success: false,
                 message: 'Shipment not found' 
             });
         }
 
-        console.log('📦 Found shipment:', shipment.trackingNumber);
-        console.log('💰 Old freight cost:', shipment.freightCost);
-
-        // Store old cost for history
-        const oldCost = shipment.freightCost || 0;
-        
-        // Update the freight cost
-        shipment.freightCost = parsedCost;
+        shipment.freightCost = freightCost || 0;
         shipment.updatedAt = new Date();
         
-        // Add to tracking history
-        shipment.trackingHistory.push({
-            status: shipment.status || 'pending',
-            location: shipment.origin || 'Unknown',
-            message: `Freight cost updated`,
-            remark: `Freight cost changed from £${oldCost.toFixed(2)} to £${parsedCost.toFixed(2)}`,
-            timestamp: new Date()
-        });
-        
-        // Save the updated shipment
         await shipment.save();
-
-        console.log('✅ Freight cost updated successfully to:', shipment.freightCost);
-
-        // Return the updated shipment
-        const updatedShipment = shipment.toObject();
-        updatedShipment.freightCost = Number(updatedShipment.freightCost);
 
         res.json({ 
             success: true,
-            message: 'Freight cost updated successfully',
-            freightCost: updatedShipment.freightCost,
-            shipment: updatedShipment
+            message: 'Freight cost updated successfully'
         });
-
     } catch (error) {
-        console.error('❌ Error updating freight cost:', error);
+        console.error('Error updating freight cost:', error);
         res.status(500).json({ 
             success: false,
-            message: 'Error updating freight cost: ' + error.message 
+            message: 'Error updating freight cost' 
         });
     }
 });
@@ -763,13 +706,6 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
             .limit(5)
             .populate('createdBy', 'username');
 
-        // Process recent shipments to ensure freightCost is a number
-        const processedRecentShipments = recentShipments.map(s => {
-            const shipment = s.toObject();
-            shipment.freightCost = Number(shipment.freightCost) || 0;
-            return shipment;
-        });
-
         res.json({
             success: true,
             totalShipments,
@@ -778,7 +714,7 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
             pendingShipments,
             totalUsers,
             adminUsers,
-            recentShipments: processedRecentShipments
+            recentShipments
         });
     } catch (error) {
         console.error('Error fetching stats:', error);
