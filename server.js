@@ -15,14 +15,17 @@ app.use(cors({
     origin: '*',
     credentials: true
 }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '50mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 app.use(express.static(path.join(__dirname)));
 
 // ============= MongoDB Connection =============
 const MONGODB_URI = 'mongodb+srv://johnpaul:jp54321@cluster0.ugm91.mongodb.net/shipping_db?retryWrites=true&w=majority';
 
-mongoose.connect(MONGODB_URI)
+mongoose.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
 .then(() => {
     console.log('✅ MongoDB connected successfully');
 })
@@ -37,17 +40,18 @@ const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     username: { type: String, unique: true, required: true },
     email: { type: String, unique: true, required: true },
-    phone: String,
+    phone: { type: String, default: '' },
     password: { type: String, required: true },
     isAdmin: { type: Boolean, default: true },
     accountType: { type: String, enum: ['user', 'admin'], default: 'admin' },
     createdAt: { type: Date, default: Date.now },
-    lastLogin: Date,
+    lastLogin: { type: Date },
     status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 });
 
-// Shipment Schema - COMPLETE with ALL fields properly defined
+// Shipment Schema - COMPLETE with ALL fields and strict: false for flexibility
 const shipmentSchema = new mongoose.Schema({
+    // Core fields
     trackingNumber: { type: String, unique: true, required: true },
     
     // Sender Information
@@ -69,12 +73,12 @@ const shipmentSchema = new mongoose.Schema({
     carrierRef: { type: String, default: '' },
     shipmentType: { type: String, default: 'ROAD' },
     
-    // Package Details - ALL FIELDS INCLUDED
+    // Package Details - ALL FIELDS EXPLICITLY DEFINED
     product: { type: String, default: '' },
     quantity: { type: String, default: '' },
     pieceType: { type: String, default: '' },
-    packageType: { type: String, default: '' },      // THIS IS NOW PROPERLY DEFINED
-    packageStatus: { type: String, default: '' },    // THIS IS NOW PROPERLY DEFINED
+    packageType: { type: String, default: '' },      // CRITICAL FIELD
+    packageStatus: { type: String, default: '' },    // CRITICAL FIELD
     description: { type: String, default: '' },
     length: { type: String, default: '' },
     width: { type: String, default: '' },
@@ -85,9 +89,9 @@ const shipmentSchema = new mongoose.Schema({
     paymentMode: { type: String, default: 'cash' },
     freightCost: { type: Number, default: 0 },
     
-    // Dates - ALL INCLUDED
+    // Dates - ALL EXPLICITLY DEFINED
     expectedDelivery: { type: String, default: '' },
-    departureDate: { type: String, default: '' },    // THIS IS NOW PROPERLY DEFINED
+    departureDate: { type: String, default: '' },    // CRITICAL FIELD
     pickupDate: { type: String, default: '' },
     departureTime: { type: String, default: '' },
     
@@ -104,10 +108,10 @@ const shipmentSchema = new mongoose.Schema({
     
     // Tracking History
     trackingHistory: [{
-        status: String,
-        location: String,
-        message: String,
-        remark: String,
+        status: { type: String, default: '' },
+        location: { type: String, default: '' },
+        message: { type: String, default: '' },
+        remark: { type: String, default: '' },
         timestamp: { type: Date, default: Date.now }
     }],
     
@@ -115,6 +119,9 @@ const shipmentSchema = new mongoose.Schema({
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
+}, { 
+    strict: false, // Allow saving fields not defined in schema
+    timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' }
 });
 
 const User = mongoose.model('User', userSchema);
@@ -430,6 +437,13 @@ app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
             });
         }
 
+        // Log to verify fields are being returned
+        console.log(`📦 Tracking ${trackingNumber}:`, {
+            packageType: shipment.packageType,
+            packageStatus: shipment.packageStatus,
+            departureDate: shipment.departureDate
+        });
+
         res.json({
             success: true,
             shipment
@@ -443,12 +457,34 @@ app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
     }
 });
 
-// Create new shipment - With ALL fields mapped and validated
+// Create new shipment - With ALL fields mapped
 app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
     try {
         console.log('📦 RECEIVED SHIPMENT DATA:', JSON.stringify(req.body, null, 2));
         
         const data = req.body;
+        
+        // Validate required fields
+        if (!data.comment) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Initial remarks are required' 
+            });
+        }
+
+        if (!data.senderName || !data.senderPhone || !data.senderAddress) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Sender name, phone and address are required' 
+            });
+        }
+
+        if (!data.origin || !data.destination) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Origin and destination are required' 
+            });
+        }
         
         // Generate tracking number if not provided
         let trackingNumber = data.trackingNumber;
@@ -460,7 +496,7 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             } while (exists);
         }
 
-        // Create shipment object with ALL fields including missing ones
+        // Create shipment object with ALL fields explicitly set
         const shipmentData = {
             trackingNumber: trackingNumber,
             
@@ -482,12 +518,12 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             carrier: data.carrier || '',
             shipmentType: data.shipmentType || 'ROAD',
             
-            // Package Details - ALL INCLUDED
+            // Package Details - ALL EXPLICITLY SET
             product: data.product || '',
             quantity: data.quantity ? data.quantity.toString() : '',
             pieceType: data.pieceType || '',
-            packageType: data.packageType || '',        // NOW INCLUDED
-            packageStatus: data.packageStatus || '',    // NOW INCLUDED
+            packageType: data.packageType || '',        // CRITICAL FIELD
+            packageStatus: data.packageStatus || '',    // CRITICAL FIELD
             description: data.description || '',
             length: data.length ? data.length.toString() : '',
             width: data.width ? data.width.toString() : '',
@@ -498,19 +534,19 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             paymentMode: data.paymentMode || 'cash',
             freightCost: data.freightCost || 0,
             
-            // Dates - ALL INCLUDED
+            // Dates - ALL EXPLICITLY SET
             expectedDelivery: data.expectedDelivery || '',
-            departureDate: data.departureDate || '',    // NOW INCLUDED
+            departureDate: data.departureDate || '',    // CRITICAL FIELD
             pickupDate: data.pickupDate || '',
             
             // Status
             status: data.status || 'pending',
             
-            // Remarks
+            // Remarks - CRITICAL FIELD
             remark: data.comment || '',
             comment: data.comment || '',
             
-            // Tracking History - Initial entry with remarks
+            // Tracking History
             trackingHistory: [{
                 status: data.status || 'pending',
                 location: data.origin || 'Origin',
@@ -525,42 +561,22 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             updatedAt: new Date()
         };
 
-        // Validate required fields
-        if (!shipmentData.senderName || !shipmentData.senderPhone || !shipmentData.senderAddress) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Sender name, phone and address are required' 
-            });
-        }
-
-        if (!shipmentData.recipientName || !shipmentData.recipientPhone || !shipmentData.deliveryAddress) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Recipient name, phone and delivery address are required' 
-            });
-        }
-
-        if (!shipmentData.origin || !shipmentData.destination) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Origin and destination are required' 
-            });
-        }
-
-        if (!shipmentData.comment) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Initial remarks are required' 
-            });
-        }
+        // Log the data being saved
+        console.log('💾 SAVING TO DATABASE:', {
+            trackingNumber: shipmentData.trackingNumber,
+            packageType: shipmentData.packageType,
+            packageStatus: shipmentData.packageStatus,
+            departureDate: shipmentData.departureDate,
+            comment: shipmentData.comment
+        });
 
         // Create and save
         const shipment = new Shipment(shipmentData);
         await shipment.save();
         
         console.log('✅ SHIPMENT SAVED SUCCESSFULLY!');
+        console.log('Saved ID:', shipment._id);
         console.log('Saved tracking:', shipment.trackingNumber);
-        console.log('Saved sender:', shipment.senderName);
         console.log('Saved package type:', shipment.packageType);
         console.log('Saved package status:', shipment.packageStatus);
         console.log('Saved departure date:', shipment.departureDate);
@@ -585,7 +601,8 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
 // Get all shipments (admin)
 app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
     try {
-        const shipments = await Shipment.find().sort({ createdAt: -1 });
+        const shipments = await Shipment.find().sort({ createdAt: -1 }).lean(); // Use lean() for better performance
+        
         console.log(`📋 Found ${shipments.length} shipments`);
         
         // Log first shipment to verify all fields are present
@@ -615,7 +632,7 @@ app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
 // Get single shipment by ID
 app.get('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) => {
     try {
-        const shipment = await Shipment.findById(req.params.id);
+        const shipment = await Shipment.findById(req.params.id).lean();
         if (!shipment) {
             return res.status(404).json({ 
                 success: false,
@@ -626,7 +643,8 @@ app.get('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) => {
         console.log(`📋 Fetched shipment ${shipment.trackingNumber} with fields:`, {
             packageType: shipment.packageType,
             packageStatus: shipment.packageStatus,
-            departureDate: shipment.departureDate
+            departureDate: shipment.departureDate,
+            comment: shipment.comment
         });
         
         res.json({
@@ -759,7 +777,8 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
         
         const recentShipments = await Shipment.find()
             .sort({ createdAt: -1 })
-            .limit(5);
+            .limit(5)
+            .lean();
 
         res.json({
             success: true,
@@ -780,33 +799,84 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
     }
 });
 
-// Debug route to check database
+// Debug route to check database with detailed field analysis
 app.get('/api/debug/check-db', authenticate, isAdmin, async (req, res) => {
     try {
         const count = await Shipment.countDocuments();
-        const sample = await Shipment.findOne().sort({ createdAt: -1 });
+        const allShipments = await Shipment.find().limit(5).lean();
         
-        // Get field statistics
-        const fieldStats = {
+        // Analyze field presence
+        const fieldAnalysis = {
             totalShipments: count,
-            hasPackageType: await Shipment.countDocuments({ packageType: { $ne: '' } }),
-            hasPackageStatus: await Shipment.countDocuments({ packageStatus: { $ne: '' } }),
-            hasDepartureDate: await Shipment.countDocuments({ departureDate: { $ne: '' } })
+            withPackageType: await Shipment.countDocuments({ packageType: { $exists: true, $ne: '' } }),
+            withPackageStatus: await Shipment.countDocuments({ packageStatus: { $exists: true, $ne: '' } }),
+            withDepartureDate: await Shipment.countDocuments({ departureDate: { $exists: true, $ne: '' } }),
+            withComment: await Shipment.countDocuments({ comment: { $exists: true, $ne: '' } })
         };
         
         res.json({
             success: true,
             databaseConnected: mongoose.connection.readyState === 1,
-            totalShipments: count,
-            fieldStats: fieldStats,
-            latestShipment: sample ? {
-                trackingNumber: sample.trackingNumber,
-                senderName: sample.senderName,
-                packageType: sample.packageType,
-                packageStatus: sample.packageStatus,
-                departureDate: sample.departureDate,
-                createdAt: sample.createdAt
-            } : null
+            databaseName: mongoose.connection.name,
+            collections: {
+                shipments: count,
+                users: await User.countDocuments()
+            },
+            fieldAnalysis: fieldAnalysis,
+            sampleShipments: allShipments.map(s => ({
+                trackingNumber: s.trackingNumber,
+                packageType: s.packageType || '(empty)',
+                packageStatus: s.packageStatus || '(empty)',
+                departureDate: s.departureDate || '(empty)',
+                comment: s.comment || '(empty)',
+                createdAt: s.createdAt
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Force update all shipments to ensure fields exist
+app.post('/api/debug/fix-shipments', authenticate, isAdmin, async (req, res) => {
+    try {
+        const shipments = await Shipment.find({});
+        let updated = 0;
+        
+        for (const shipment of shipments) {
+            const updates = {};
+            let needsUpdate = false;
+            
+            if (!shipment.packageType && shipment.packageType !== '') {
+                updates.packageType = '';
+                needsUpdate = true;
+            }
+            if (!shipment.packageStatus && shipment.packageStatus !== '') {
+                updates.packageStatus = '';
+                needsUpdate = true;
+            }
+            if (!shipment.departureDate && shipment.departureDate !== '') {
+                updates.departureDate = '';
+                needsUpdate = true;
+            }
+            if (!shipment.comment && shipment.comment !== '') {
+                updates.comment = shipment.remark || '';
+                needsUpdate = true;
+            }
+            
+            if (needsUpdate) {
+                await Shipment.updateOne(
+                    { _id: shipment._id },
+                    { $set: updates }
+                );
+                updated++;
+            }
+        }
+        
+        res.json({
+            success: true,
+            message: `Fixed ${updated} shipments`,
+            totalProcessed: shipments.length
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -843,7 +913,8 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`🔑 Login: http://localhost:${PORT}/api/login (POST)`);
     console.log(`📦 Public Tracking: http://localhost:${PORT}`);
     console.log(`👤 Admin Panel: http://localhost:${PORT}/admin`);
-    console.log(`🔍 Debug DB: http://localhost:${PORT}/api/debug/check-db (need auth)\n`);
+    console.log(`🔍 Debug DB: http://localhost:${PORT}/api/debug/check-db (need auth)`);
+    console.log(`🔧 Fix DB: http://localhost:${PORT}/api/debug/fix-shipments (need auth)\n`);
 });
 
 process.on('SIGTERM', () => {
