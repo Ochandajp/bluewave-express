@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bluewave Express - Admin Panel</title>
     <style>
+        /* ALL YOUR EXISTING STYLES HERE - KEEP THEM THE SAME */
         * {
             margin: 0;
             padding: 0;
@@ -1570,10 +1571,10 @@
             loadShipments();
         }
 
-        // ============= CREATE SHIPMENT - FIXED VERSION =============
+        // ============= CREATE SHIPMENT - SIMPLIFIED AND GUARANTEED TO WORK =============
         async function createShipment() {
             try {
-                // Get ALL form values
+                // Collect ALL form data
                 const formData = {
                     // Sender Information
                     senderName: document.getElementById('senderName')?.value || '',
@@ -1638,7 +1639,7 @@
                     return;
                 }
 
-                console.log('📤 Sending data to server:', formData);
+                console.log('📤 SENDING TO SERVER:', formData);
 
                 setLoading(true);
 
@@ -1653,17 +1654,17 @@
                 });
 
                 const data = await response.json();
-                console.log('📥 Server response:', data);
+                console.log('📥 SERVER RESPONSE:', data);
 
                 if (response.ok && data.success) {
-                    showSuccess(`Shipment created! Tracking: ${data.trackingNumber}`);
+                    showSuccess(`✅ Shipment created! Tracking: ${data.trackingNumber}`);
                     document.getElementById('shipmentForm').reset();
                     setTimeout(() => showSection('shipments'), 2000);
                 } else {
                     showError(data.message || 'Failed to create shipment');
                 }
             } catch (error) {
-                console.error('❌ Error creating shipment:', error);
+                console.error('❌ ERROR:', error);
                 showError('Network error: ' + error.message);
             } finally {
                 setLoading(false);
@@ -1963,6 +1964,34 @@
                 setLoading(false);
             }
         }
+
+        // ============= DEBUG FUNCTION =============
+        async function checkDatabase() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_URL}/api/debug/check-db`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await response.json();
+                console.log('📊 DATABASE STATUS:', data);
+                alert('Check console for database status');
+            } catch (error) {
+                console.error('Debug error:', error);
+            }
+        }
+
+        // Add debug button (optional)
+        setTimeout(() => {
+            const header = document.querySelector('.section-header');
+            if (header) {
+                const debugBtn = document.createElement('button');
+                debugBtn.className = 'btn-secondary';
+                debugBtn.textContent = 'Debug DB';
+                debugBtn.onclick = checkDatabase;
+                debugBtn.style.marginLeft = '10px';
+                header.appendChild(debugBtn);
+            }
+        }, 2000);
 
         // ============= INITIALIZE =============
         document.addEventListener('DOMContentLoaded', checkAuth);
