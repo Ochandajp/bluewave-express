@@ -23,7 +23,6 @@
             padding: 1rem;
         }
 
-        /* Animated background */
         body::before {
             content: '';
             position: fixed;
@@ -301,7 +300,6 @@
             font-weight: bold;
         }
 
-        /* Mobile optimizations */
         @media (max-width: 480px) {
             .container {
                 padding: 0.5rem;
@@ -325,7 +323,6 @@
             }
         }
 
-        /* Touch-friendly targets */
         @media (hover: none) and (pointer: coarse) {
             .tab, .btn-submit, .info-text a {
                 min-height: 44px;
@@ -335,11 +332,10 @@
             }
             
             .form-group input {
-                font-size: 16px; /* Prevents zoom on iOS */
+                font-size: 16px;
             }
         }
 
-        /* Landscape orientation */
         @media (max-height: 600px) and (orientation: landscape) {
             .container {
                 padding: 0.5rem;
@@ -433,10 +429,10 @@
     </div>
 
     <script>
-        // Configuration - IMPORTANT: Change this to your actual Render URL
-        const API_URL = window.location.origin; // This will use the current domain
+        // ============= YOUR ACTUAL RENDER URL =============
+        const API_URL = 'https://bluewave-express-cargo.onrender.com';
         
-        console.log('API URL:', API_URL);
+        console.log('🔧 API URL:', API_URL);
 
         // Check if already logged in
         (function checkAuth() {
@@ -445,7 +441,7 @@
                 const user = JSON.parse(localStorage.getItem('user') || '{}');
                 
                 if (token && user && (user.isAdmin || user.role === 'admin')) {
-                    console.log('Already logged in, redirecting to admin...');
+                    console.log('✅ Already logged in, redirecting to admin...');
                     window.location.href = '/admin';
                 }
             } catch (e) {
@@ -495,6 +491,19 @@
             element.className = `message ${type}`;
         }
 
+        // Test server connection first
+        async function testServerConnection() {
+            try {
+                const response = await fetch(`${API_URL}/api/test`);
+                const data = await response.json();
+                console.log('✅ Server connection test:', data);
+                return true;
+            } catch (error) {
+                console.error('❌ Server connection failed:', error);
+                return false;
+            }
+        }
+
         // Handle Login
         async function handleLogin() {
             const username = document.getElementById('loginUsername').value.trim();
@@ -506,9 +515,16 @@
             }
 
             setLoading(true);
+            showMessage('loginMessage', 'Connecting to server...', 'success');
 
             try {
-                console.log('Attempting login with:', username);
+                // Test connection first
+                const isConnected = await testServerConnection();
+                if (!isConnected) {
+                    throw new Error('Server is not responding');
+                }
+
+                console.log('📤 Sending login request to:', `${API_URL}/api/login`);
                 
                 const response = await fetch(`${API_URL}/api/login`, {
                     method: 'POST',
@@ -520,16 +536,14 @@
                 });
 
                 const data = await response.json();
-                console.log('Login response:', data);
+                console.log('📥 Login response:', data);
 
                 if (response.ok && data.success) {
-                    // Store user data
                     localStorage.setItem('token', data.token);
                     localStorage.setItem('user', JSON.stringify(data.user));
                     
                     showMessage('loginMessage', 'Login successful! Redirecting...', 'success');
                     
-                    // Redirect to admin page
                     setTimeout(() => {
                         window.location.href = '/admin';
                     }, 1500);
@@ -537,8 +551,8 @@
                     showMessage('loginMessage', data.message || 'Login failed', 'error');
                 }
             } catch (error) {
-                console.error('Login error:', error);
-                showMessage('loginMessage', 'Cannot connect to server. Please try again.', 'error');
+                console.error('❌ Login error:', error);
+                showMessage('loginMessage', 'Cannot connect to server. Please check if server is running.', 'error');
             } finally {
                 setLoading(false);
             }
@@ -552,7 +566,6 @@
             const username = document.getElementById('regUsername').value.trim();
             const password = document.getElementById('regPassword').value.trim();
 
-            // Validation
             if (!name || !email || !username || !password) {
                 showMessage('registerMessage', 'Please fill in all required fields', 'error');
                 return;
@@ -569,9 +582,16 @@
             }
 
             setLoading(true);
+            showMessage('registerMessage', 'Connecting to server...', 'success');
 
             try {
-                console.log('Attempting registration for:', username);
+                // Test connection first
+                const isConnected = await testServerConnection();
+                if (!isConnected) {
+                    throw new Error('Server is not responding');
+                }
+
+                console.log('📤 Sending registration request to:', `${API_URL}/api/register`);
                 
                 const response = await fetch(`${API_URL}/api/register`, {
                     method: 'POST',
@@ -583,30 +603,27 @@
                 });
 
                 const data = await response.json();
-                console.log('Register response:', data);
+                console.log('📥 Register response:', data);
 
                 if (response.ok && data.success) {
                     showMessage('registerMessage', 'Account created successfully! You can now login.', 'success');
                     
-                    // Clear form
                     document.getElementById('regName').value = '';
                     document.getElementById('regEmail').value = '';
                     document.getElementById('regPhone').value = '';
                     document.getElementById('regUsername').value = '';
                     document.getElementById('regPassword').value = '';
                     
-                    // Switch to login tab after 2 seconds
                     setTimeout(() => {
                         switchTab('login');
-                        // Pre-fill username
                         document.getElementById('loginUsername').value = username;
                     }, 2000);
                 } else {
                     showMessage('registerMessage', data.message || 'Registration failed', 'error');
                 }
             } catch (error) {
-                console.error('Registration error:', error);
-                showMessage('registerMessage', 'Cannot connect to server. Please try again.', 'error');
+                console.error('❌ Registration error:', error);
+                showMessage('registerMessage', 'Cannot connect to server. Please check if server is running.', 'error');
             } finally {
                 setLoading(false);
             }

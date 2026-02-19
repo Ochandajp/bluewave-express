@@ -13,8 +13,12 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors({
     origin: '*',
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
 }));
+app.options('*', cors());
+
 app.use(bodyParser.json({ limit: '50mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '50mb' }));
 
@@ -309,19 +313,16 @@ app.get('/api/setup-admin', async (req, res) => {
     }
 });
 
-// ============= STATIC ROUTES - FIXED =============
+// ============= STATIC ROUTES =============
 
-// Home page (public tracking)
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// Login page
 app.get('/login', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// Admin page - This will redirect to login if not authenticated via frontend
 app.get('/admin', (req, res) => {
     res.sendFile(path.join(__dirname, 'admin.html'));
 });
@@ -762,6 +763,39 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
     }
 });
 
+// DEBUG: Check database
+app.get('/api/debug/check-db', authenticate, isAdmin, async (req, res) => {
+    try {
+        const shipments = await Shipment.find().limit(3).lean();
+        
+        res.json({
+            success: true,
+            databaseConnected: mongoose.connection.readyState === 1,
+            totalShipments: await Shipment.countDocuments(),
+            sampleShipments: shipments.map(s => ({
+                trackingNumber: s.trackingNumber,
+                packageType: s.packageType || '(not set)',
+                packageStatus: s.packageStatus || '(not set)',
+                departureDate: s.departureDate || '(not set)',
+                comment: s.comment || '(not set)'
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// DEBUG: List files
+app.get('/api/debug/files', (req, res) => {
+    const fs = require('fs');
+    const files = fs.readdirSync(__dirname);
+    res.json({
+        success: true,
+        currentDirectory: __dirname,
+        files: files.filter(f => f.endsWith('.html'))
+    });
+});
+
 // ============= ERROR HANDLING =============
 
 app.use((req, res) => {
@@ -789,7 +823,8 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`📦 Public Tracking: http://localhost:${PORT}/`);
     console.log(`🔐 Login Page: http://localhost:${PORT}/login`);
     console.log(`👤 Admin Panel: http://localhost:${PORT}/admin`);
-    console.log(`🔧 Setup Admin: http://localhost:${PORT}/api/setup-admin\n`);
+    console.log(`🔧 Setup Admin: http://localhost:${PORT}/api/setup-admin`);
+    console.log(`🔍 Debug Files: http://localhost:${PORT}/api/debug/files\n`);
 });
 
 process.on('SIGTERM', () => {
