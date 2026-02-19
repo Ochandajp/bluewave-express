@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bluewave Express - Admin Panel</title>
+    <title>Bluewave Express - Admin Dashboard</title>
     <style>
+        /* ALL YOUR EXISTING ADMIN CSS STAYS EXACTLY THE SAME */
+        /* Just copy all your existing admin.css styles here */
         * {
             margin: 0;
             padding: 0;
@@ -181,24 +183,6 @@
             box-shadow: 0 0 20px #00ffff;
         }
 
-        .btn-warning {
-            padding: 0.8rem 2rem;
-            background: transparent;
-            border: 2px solid #ffa500;
-            border-radius: 50px;
-            color: #ffa500;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 1rem;
-        }
-
-        .btn-warning:hover {
-            background: #ffa500;
-            color: #000814;
-            box-shadow: 0 0 20px #ffa500;
-        }
-
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -267,11 +251,6 @@
             color: #ffffff;
             cursor: pointer;
             min-width: 150px;
-        }
-
-        .filter-select option {
-            background: #001824;
-            color: #ffffff;
         }
 
         .table-container {
@@ -354,152 +333,6 @@
         .action-btn:hover {
             transform: translateY(-2px);
             filter: brightness(1.2);
-        }
-
-        .login-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #001f3f, #000814);
-        }
-
-        .login-box {
-            background: rgba(255, 255, 255, 0.02);
-            border: 2px solid #00ffff33;
-            border-radius: 30px;
-            padding: 3rem;
-            width: 100%;
-            max-width: 450px;
-            backdrop-filter: blur(10px);
-        }
-
-        .login-box h2 {
-            color: #00ffff;
-            text-align: center;
-            margin-bottom: 2rem;
-            font-size: 2rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            color: #00ffff;
-            margin-bottom: 0.5rem;
-            font-size: 0.9rem;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 1rem;
-            background: rgba(255, 255, 255, 0.05);
-            border: 2px solid #00ffff33;
-            border-radius: 15px;
-            color: #ffffff;
-            font-size: 1rem;
-            transition: all 0.3s;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        .form-group select {
-            cursor: pointer;
-        }
-
-        .form-group select option {
-            background: #001824;
-            color: #ffffff;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 80px;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #00ffff;
-            box-shadow: 0 0 20px #00ffff33;
-        }
-
-        .login-btn {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(45deg, #00ffff, #ff00ff);
-            border: none;
-            border-radius: 15px;
-            color: #ffffff;
-            font-weight: bold;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 1rem;
-        }
-
-        .login-btn:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 30px #ff00ff;
-        }
-
-        .error-message {
-            color: #ff4444;
-            text-align: center;
-            margin: 1rem 0;
-            padding: 1rem;
-            border-radius: 10px;
-            background: rgba(255, 0, 0, 0.1);
-            border: 1px solid #ff4444;
-            display: none;
-        }
-
-        .error-message.active {
-            display: block;
-        }
-
-        .success-message {
-            color: #00ff00;
-            text-align: center;
-            margin: 1rem 0;
-            padding: 1rem;
-            border-radius: 10px;
-            background: rgba(0, 255, 0, 0.1);
-            border: 1px solid #00ff00;
-            display: none;
-        }
-
-        .success-message.active {
-            display: block;
-        }
-
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 2rem;
-        }
-
-        .loading-spinner.active {
-            display: block;
-        }
-
-        .spinner {
-            border: 4px solid rgba(0, 255, 255, 0.1);
-            border-left-color: #00ffff;
-            border-right-color: #ff00ff;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
         }
 
         .modal {
@@ -659,36 +492,65 @@
             color: #ffa500;
         }
 
-        .register-link {
-            text-align: center;
-            margin-top: 1.5rem;
-            color: #888;
-        }
-
-        .register-link a {
-            color: #00ffff;
-            text-decoration: none;
-            cursor: pointer;
-        }
-
-        .register-link a:hover {
-            text-decoration: underline;
-        }
-
-        #registerModal .modal-content {
-            max-width: 500px;
-        }
-
         .required-field::after {
             content: " *";
             color: #ff4444;
             font-weight: bold;
         }
 
-        .remark-count {
-            font-size: 0.8rem;
-            color: #888;
-            margin-top: 0.3rem;
+        .error-message {
+            color: #ff4444;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgba(255, 0, 0, 0.1);
+            border: 1px solid #ff4444;
+            display: none;
+        }
+
+        .error-message.active {
+            display: block;
+        }
+
+        .success-message {
+            color: #00ff00;
+            text-align: center;
+            margin: 1rem 0;
+            padding: 1rem;
+            border-radius: 10px;
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #00ff00;
+            display: none;
+        }
+
+        .success-message.active {
+            display: block;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .loading-spinner.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 255, 255, 0.1);
+            border-left-color: #00ffff;
+            border-right-color: #ff00ff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
 
         .shipment-id {
@@ -696,141 +558,18 @@
             font-size: 0.8rem;
             font-family: monospace;
         }
-
-        @media (max-width: 768px) {
-            .dashboard-container {
-                flex-direction: column;
-            }
-            
-            .sidebar {
-                width: 100%;
-            }
-            
-            .history-item {
-                grid-template-columns: 1fr;
-            }
-
-            .form-grid textarea {
-                grid-column: span 1;
-            }
-        }
     </style>
 </head>
 <body>
-    <!-- Login Section -->
-    <div id="loginSection" class="login-container">
-        <div class="login-box">
-            <h2>Admin Login</h2>
-            <div class="form-group">
-                <label>Username or Email</label>
-                <input type="text" id="loginUsername" placeholder="Enter username or email">
-            </div>
-            <div class="form-group">
-                <label>Password</label>
-                <input type="password" id="loginPassword" placeholder="Enter password">
-            </div>
-            <button class="login-btn" onclick="adminLogin()">Login</button>
-            <div class="error-message" id="loginError"></div>
-            <div class="register-link">
-                Don't have an account? <a onclick="showRegisterModal()">Create Account</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Register Modal -->
-    <div class="modal" id="registerModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Create Admin Account</h2>
-                <span class="close-modal" onclick="closeRegisterModal()">&times;</span>
-            </div>
-            <div class="form-group">
-                <label>Full Name *</label>
-                <input type="text" id="regName" placeholder="Enter your full name">
-            </div>
-            <div class="form-group">
-                <label>Email *</label>
-                <input type="email" id="regEmail" placeholder="Enter your email">
-            </div>
-            <div class="form-group">
-                <label>Phone Number</label>
-                <input type="tel" id="regPhone" placeholder="Enter your phone number">
-            </div>
-            <div class="form-group">
-                <label>Username *</label>
-                <input type="text" id="regUsername" placeholder="Choose a username">
-            </div>
-            <div class="form-group">
-                <label>Password *</label>
-                <input type="password" id="regPassword" placeholder="Choose a password">
-            </div>
-            <button class="login-btn" onclick="handleRegister()">Create Account</button>
-            <div class="error-message" id="registerError"></div>
-            <div class="register-link">
-                Already have an account? <a onclick="showLoginModal()">Login here</a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Update Status Modal -->
-    <div class="modal" id="updateStatusModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>Update Shipment Status</h2>
-                <span class="close-modal" onclick="closeStatusModal()">&times;</span>
-            </div>
-            <div class="form-group">
-                <label class="required-field">New Status</label>
-                <select id="updateStatus" class="form-control">
-                    <option value="pending">Pending</option>
-                    <option value="on hold">On Hold</option>
-                    <option value="out for delivery">Out for Delivery</option>
-                    <option value="delivered">Delivered</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Location</label>
-                <input type="text" id="updateLocation" placeholder="Current location">
-            </div>
-            <div class="form-group">
-                <label>Message</label>
-                <input type="text" id="updateMessage" placeholder="Brief update message">
-            </div>
-            <div class="form-group">
-                <label class="required-field">Remarks</label>
-                <textarea id="updateRemark" rows="5" placeholder="Enter detailed remarks..." required></textarea>
-                <div class="remark-count" id="remarkCount">0 characters</div>
-            </div>
-            <button class="btn-submit" onclick="submitStatusUpdate()">Update Status</button>
-            <div class="error-message" id="statusError"></div>
-        </div>
-    </div>
-
-    <!-- Update Freight Cost Modal -->
-    <div class="modal" id="freightCostModal">
-        <div class="modal-content" style="max-width: 500px;">
-            <div class="modal-header">
-                <h2>Update Freight Cost</h2>
-                <span class="close-modal" onclick="closeFreightCostModal()">&times;</span>
-            </div>
-            <div class="form-group">
-                <label class="required-field">Freight Cost (£)</label>
-                <input type="number" id="freightCost" step="0.01" min="0" placeholder="Enter freight cost">
-            </div>
-            <button class="btn-submit" onclick="submitFreightCost()">Update Cost</button>
-            <div class="error-message" id="freightError"></div>
-        </div>
-    </div>
-
     <!-- Dashboard Section -->
-    <div id="dashboardSection" style="display: none;">
+    <div id="dashboardSection">
         <nav class="navbar">
             <div class="logo">
                 <span class="logo-icon">⚓</span>
                 <span class="logo-text">Bluewave Express Cargo</span>
             </div>
             <div class="user-info">
-                <span class="user-name" id="adminName">Admin</span>
+                <span class="user-name" id="adminName">Loading...</span>
                 <button class="btn-logout" onclick="logout()">Logout</button>
             </div>
         </nav>
@@ -1173,9 +912,84 @@
         </div>
     </div>
 
+    <!-- Update Status Modal -->
+    <div class="modal" id="updateStatusModal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2>Update Shipment Status</h2>
+                <span class="close-modal" onclick="closeStatusModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label class="required-field">New Status</label>
+                <select id="updateStatus" class="form-control">
+                    <option value="pending">Pending</option>
+                    <option value="on hold">On Hold</option>
+                    <option value="out for delivery">Out for Delivery</option>
+                    <option value="delivered">Delivered</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Location</label>
+                <input type="text" id="updateLocation" placeholder="Current location">
+            </div>
+            <div class="form-group">
+                <label>Message</label>
+                <input type="text" id="updateMessage" placeholder="Brief update message">
+            </div>
+            <div class="form-group">
+                <label class="required-field">Remarks</label>
+                <textarea id="updateRemark" rows="5" placeholder="Enter detailed remarks..." required></textarea>
+                <div class="remark-count" id="remarkCount">0 characters</div>
+            </div>
+            <button class="btn-submit" onclick="submitStatusUpdate()">Update Status</button>
+            <div class="error-message" id="statusError"></div>
+        </div>
+    </div>
+
+    <!-- Update Freight Cost Modal -->
+    <div class="modal" id="freightCostModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>Update Freight Cost</h2>
+                <span class="close-modal" onclick="closeFreightCostModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label class="required-field">Freight Cost (£)</label>
+                <input type="number" id="freightCost" step="0.01" min="0" placeholder="Enter freight cost">
+            </div>
+            <button class="btn-submit" onclick="submitFreightCost()">Update Cost</button>
+            <div class="error-message" id="freightError"></div>
+        </div>
+    </div>
+
     <script>
         // ============= CONFIGURATION =============
-        const API_URL = 'https://bluewave-express-cargo.onrender.com';
+        const API_URL = 'https://bluewave-express-cargo.onrender.com'; // Replace with your Render URL
+
+        // ============= CHECK AUTHENTICATION =============
+        (function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token || !user || !(user.isAdmin || user.role === 'admin')) {
+                // Redirect to login page
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            // Set admin name
+            document.getElementById('adminName').textContent = user.name || 'Admin';
+            
+            // Load dashboard
+            loadDashboard();
+        })();
+
+        // ============= LOGOUT =============
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            window.location.href = '/login.html';
+        }
 
         // ============= GLOBAL VARIABLES =============
         let currentShipmentId = null;
@@ -1190,26 +1004,6 @@
                 });
             }
         });
-
-        // ============= MODAL FUNCTIONS =============
-        function showLoginModal() {
-            closeRegisterModal();
-            document.getElementById('loginSection').style.display = 'flex';
-        }
-
-        function showRegisterModal() {
-            document.getElementById('registerModal').classList.add('active');
-            document.getElementById('registerError').classList.remove('active');
-        }
-
-        function closeRegisterModal() {
-            document.getElementById('registerModal').classList.remove('active');
-            document.getElementById('regName').value = '';
-            document.getElementById('regEmail').value = '';
-            document.getElementById('regPhone').value = '';
-            document.getElementById('regUsername').value = '';
-            document.getElementById('regPassword').value = '';
-        }
 
         // ============= STATUS MODAL FUNCTIONS =============
         function showUpdateStatusModal(shipmentId, currentStatus) {
@@ -1255,115 +1049,6 @@
         function closeFreightCostModal() {
             document.getElementById('freightCostModal').classList.remove('active');
             currentShipmentId = null;
-        }
-
-        // ============= REGISTER FUNCTION =============
-        async function handleRegister() {
-            const name = document.getElementById('regName').value.trim();
-            const email = document.getElementById('regEmail').value.trim();
-            const phone = document.getElementById('regPhone').value.trim();
-            const username = document.getElementById('regUsername').value.trim();
-            const password = document.getElementById('regPassword').value.trim();
-            const errorEl = document.getElementById('registerError');
-
-            errorEl.classList.remove('active');
-            
-            if (!name || !email || !username || !password) {
-                errorEl.textContent = 'Please fill in all required fields';
-                errorEl.classList.add('active');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/api/register`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ name, username, email, phone, password })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    closeRegisterModal();
-                    checkAuth();
-                } else {
-                    errorEl.textContent = data.message || 'Registration failed';
-                    errorEl.classList.add('active');
-                }
-            } catch (error) {
-                console.error('Registration error:', error);
-                errorEl.textContent = 'Cannot connect to server';
-                errorEl.classList.add('active');
-            }
-        }
-
-        // ============= CHECK AUTH =============
-        function checkAuth() {
-            const token = localStorage.getItem('token');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            
-            if (token && user && (user.isAdmin || user.role === 'admin')) {
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('dashboardSection').style.display = 'block';
-                document.getElementById('adminName').textContent = user.name || 'Admin';
-                loadDashboard();
-            } else {
-                document.getElementById('loginSection').style.display = 'flex';
-                document.getElementById('dashboardSection').style.display = 'none';
-            }
-        }
-
-        // ============= ADMIN LOGIN =============
-        async function adminLogin() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-            const errorEl = document.getElementById('loginError');
-
-            errorEl.classList.remove('active');
-            
-            if (!username || !password) {
-                errorEl.textContent = 'Please enter both username and password';
-                errorEl.classList.add('active');
-                return;
-            }
-
-            try {
-                const response = await fetch(`${API_URL}/api/login`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({ username, password })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('user', JSON.stringify(data.user));
-                    checkAuth();
-                } else {
-                    errorEl.textContent = data.message || 'Login failed';
-                    errorEl.classList.add('active');
-                }
-            } catch (error) {
-                console.error('Login error:', error);
-                errorEl.textContent = 'Cannot connect to server';
-                errorEl.classList.add('active');
-            }
-        }
-
-        // ============= LOGOUT =============
-        function logout() {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            checkAuth();
         }
 
         // ============= SHOW SECTIONS =============
@@ -1443,9 +1128,13 @@
                             displayRecentShipments(data.recentShipments);
                         }
                     }
+                } else if (response.status === 401) {
+                    // Token expired or invalid
+                    logout();
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
+                showError('Failed to load dashboard');
             } finally {
                 setLoading(false);
             }
@@ -1509,8 +1198,8 @@
                     } else {
                         showError('Failed to load shipments');
                     }
-                } else {
-                    showError('Failed to load shipments');
+                } else if (response.status === 401) {
+                    logout();
                 }
             } catch (error) {
                 console.error('Error loading shipments:', error);
@@ -1570,31 +1259,26 @@
             loadShipments();
         }
 
-        // ============= CREATE SHIPMENT - FIXED VERSION =============
+        // ============= CREATE SHIPMENT =============
         async function createShipment() {
             try {
-                // Get ALL form values
                 const formData = {
-                    // Sender Information
                     senderName: document.getElementById('senderName')?.value || '',
                     senderEmail: document.getElementById('senderEmail')?.value || '',
                     senderPhone: document.getElementById('senderPhone')?.value || '',
                     senderAddress: document.getElementById('senderAddress')?.value || '',
                     
-                    // Recipient Information
                     recipientName: document.getElementById('recipientName')?.value || '',
                     recipientEmail: document.getElementById('recipientEmail')?.value || '',
                     recipientPhone: document.getElementById('recipientPhone')?.value || '',
                     deliveryAddress: document.getElementById('deliveryAddress')?.value || '',
                     
-                    // Shipment Information
                     origin: document.getElementById('origin')?.value || '',
                     destination: document.getElementById('destination')?.value || '',
                     carrier: document.getElementById('carrier')?.value || '',
                     shipmentType: document.getElementById('shipmentType')?.value || 'ROAD',
                     status: document.getElementById('status')?.value || 'pending',
                     
-                    // Package Details
                     pieceType: document.getElementById('pieceType')?.value || '',
                     product: document.getElementById('product')?.value || '',
                     quantity: document.getElementById('quantity')?.value || '',
@@ -1606,23 +1290,18 @@
                     height: document.getElementById('height')?.value || '',
                     weight: document.getElementById('weight')?.value || '',
                     
-                    // Dates
                     departureDate: document.getElementById('departureDate')?.value || '',
                     pickupDate: document.getElementById('pickupDate')?.value || '',
                     expectedDelivery: document.getElementById('expectedDelivery')?.value || '',
                     
-                    // Payment
                     paymentMode: document.getElementById('paymentMode')?.value || 'cash',
                     freightCost: document.getElementById('freightCost')?.value ? parseFloat(document.getElementById('freightCost').value) : 0,
                     
-                    // Remarks
                     comment: document.getElementById('comment')?.value || '',
                     
-                    // Tracking
                     trackingNumber: document.getElementById('trackingNumber')?.value || ''
                 };
 
-                // Validate required fields
                 if (!formData.comment) {
                     showError('Initial remarks are required');
                     return;
@@ -1638,8 +1317,6 @@
                     return;
                 }
 
-                console.log('📤 Sending data to server:', formData);
-
                 setLoading(true);
 
                 const token = localStorage.getItem('token');
@@ -1653,17 +1330,18 @@
                 });
 
                 const data = await response.json();
-                console.log('📥 Server response:', data);
 
                 if (response.ok && data.success) {
                     showSuccess(`Shipment created! Tracking: ${data.trackingNumber}`);
                     document.getElementById('shipmentForm').reset();
                     setTimeout(() => showSection('shipments'), 2000);
+                } else if (response.status === 401) {
+                    logout();
                 } else {
                     showError(data.message || 'Failed to create shipment');
                 }
             } catch (error) {
-                console.error('❌ Error creating shipment:', error);
+                console.error('Error creating shipment:', error);
                 showError('Network error: ' + error.message);
             } finally {
                 setLoading(false);
@@ -1725,6 +1403,8 @@
                     if (document.getElementById('viewShipmentModal').classList.contains('active') && currentViewShipmentId === currentShipmentId) {
                         viewShipment(currentShipmentId);
                     }
+                } else if (response.status === 401) {
+                    logout();
                 } else {
                     errorEl.textContent = data.message || 'Failed to update status';
                     errorEl.classList.add('active');
@@ -1779,6 +1459,8 @@
                     if (document.getElementById('viewShipmentModal').classList.contains('active') && currentViewShipmentId === currentShipmentId) {
                         viewShipment(currentShipmentId);
                     }
+                } else if (response.status === 401) {
+                    logout();
                 } else {
                     errorEl.textContent = data.message || 'Failed to update freight cost';
                     errorEl.classList.add('active');
@@ -1810,6 +1492,8 @@
                     } else {
                         showError('Failed to load shipment details');
                     }
+                } else if (response.status === 401) {
+                    logout();
                 } else {
                     showError('Failed to load shipment details');
                 }
@@ -1824,6 +1508,14 @@
         // ============= DISPLAY SHIPMENT DETAILS =============
         function displayShipmentDetails(shipment) {
             const detailsDiv = document.getElementById('viewShipmentDetails');
+            
+            const safeShipment = {
+                ...shipment,
+                packageType: shipment.packageType || 'Not specified',
+                packageStatus: shipment.packageStatus || 'Not specified',
+                departureDate: shipment.departureDate || 'Not set',
+                comment: shipment.comment || shipment.remark || 'No remarks'
+            };
             
             let historyHtml = '';
             if (shipment.trackingHistory && shipment.trackingHistory.length > 0) {
@@ -1851,15 +1543,15 @@
                 });
             }
 
-            const departureDate = shipment.departureDate || '';
-            const pickupDate = shipment.pickupDate || '';
-            const expectedDelivery = shipment.expectedDelivery || '';
-            const statusClass = shipment.status ? shipment.status.toLowerCase().replace(/ /g, '') : 'pending';
+            const departureDate = safeShipment.departureDate || 'Not set';
+            const pickupDate = safeShipment.pickupDate || 'Not set';
+            const expectedDelivery = safeShipment.expectedDelivery || 'Not set';
+            const statusClass = safeShipment.status ? safeShipment.status.toLowerCase().replace(/ /g, '') : 'pending';
             
             let freightDisplay = '<span class="freight-tba">TBA</span>';
-            if (shipment.freightCost !== undefined && shipment.freightCost !== null && shipment.freightCost > 0) {
-                freightDisplay = `<span class="freight-cost">£${shipment.freightCost.toFixed(2)}</span>`;
-            } else if (shipment.freightCost === 0) {
+            if (safeShipment.freightCost !== undefined && safeShipment.freightCost !== null && safeShipment.freightCost > 0) {
+                freightDisplay = `<span class="freight-cost">£${safeShipment.freightCost.toFixed(2)}</span>`;
+            } else if (safeShipment.freightCost === 0) {
                 freightDisplay = '<span class="freight-cost">£0.00</span>';
             }
 
@@ -1867,54 +1559,61 @@
                 <div style="display: grid; gap: 1.5rem;">
                     <div class="form-section">
                         <h3>📦 Shipment Details</h3>
-                        <p><strong style="color: #00ffff;">Shipment ID:</strong> <span class="shipment-id">${shipment._id || ''}</span></p>
-                        <p><strong style="color: #00ffff;">Tracking Number:</strong> ${shipment.trackingNumber || ''}</p>
-                        <p><strong style="color: #00ffff;">Status:</strong> <span class="status-badge status-${statusClass}">${shipment.status || 'Pending'}</span></p>
+                        <p><strong style="color: #00ffff;">Shipment ID:</strong> <span class="shipment-id">${safeShipment._id || ''}</span></p>
+                        <p><strong style="color: #00ffff;">Tracking Number:</strong> ${safeShipment.trackingNumber || ''}</p>
+                        <p><strong style="color: #00ffff;">Status:</strong> <span class="status-badge status-${statusClass}">${safeShipment.status || 'Pending'}</span></p>
                         <p><strong style="color: #00ffff;">Departure Date:</strong> ${departureDate}</p>
                         <p><strong style="color: #00ffff;">Pickup Date:</strong> ${pickupDate}</p>
-                        <p><strong style="color: #00ffff;">Package Type:</strong> ${shipment.packageType || ''}</p>
-                        <p><strong style="color: #00ffff;">Package Status:</strong> ${shipment.packageStatus || ''}</p>
+                        <p><strong style="color: #00ffff;">Package Type:</strong> ${safeShipment.packageType}</p>
+                        <p><strong style="color: #00ffff;">Package Status:</strong> ${safeShipment.packageStatus}</p>
                     </div>
 
                     <div class="form-section">
                         <h3>📤 Sender Information</h3>
-                        <p><strong style="color: #00ffff;">Name:</strong> ${shipment.senderName || ''}</p>
-                        <p><strong style="color: #00ffff;">Email:</strong> ${shipment.senderEmail || ''}</p>
-                        <p><strong style="color: #00ffff;">Phone:</strong> ${shipment.senderPhone || ''}</p>
-                        <p><strong style="color: #00ffff;">Address:</strong> ${shipment.senderAddress || ''}</p>
+                        <p><strong style="color: #00ffff;">Name:</strong> ${safeShipment.senderName || ''}</p>
+                        <p><strong style="color: #00ffff;">Email:</strong> ${safeShipment.senderEmail || ''}</p>
+                        <p><strong style="color: #00ffff;">Phone:</strong> ${safeShipment.senderPhone || ''}</p>
+                        <p><strong style="color: #00ffff;">Address:</strong> ${safeShipment.senderAddress || ''}</p>
                     </div>
 
                     <div class="form-section">
                         <h3>👤 Recipient Information</h3>
-                        <p><strong style="color: #00ffff;">Name:</strong> ${shipment.recipientName || ''}</p>
-                        <p><strong style="color: #00ffff;">Email:</strong> ${shipment.recipientEmail || ''}</p>
-                        <p><strong style="color: #00ffff;">Phone:</strong> ${shipment.recipientPhone || ''}</p>
-                        <p><strong style="color: #00ffff;">Address:</strong> ${shipment.deliveryAddress || ''}</p>
+                        <p><strong style="color: #00ffff;">Name:</strong> ${safeShipment.recipientName || ''}</p>
+                        <p><strong style="color: #00ffff;">Email:</strong> ${safeShipment.recipientEmail || ''}</p>
+                        <p><strong style="color: #00ffff;">Phone:</strong> ${safeShipment.recipientPhone || ''}</p>
+                        <p><strong style="color: #00ffff;">Address:</strong> ${safeShipment.deliveryAddress || ''}</p>
                     </div>
 
                     <div class="form-section">
                         <h3>📍 Shipment Information</h3>
-                        <p><strong style="color: #00ffff;">Origin:</strong> ${shipment.origin || ''}</p>
-                        <p><strong style="color: #00ffff;">Destination:</strong> ${shipment.destination || ''}</p>
-                        <p><strong style="color: #00ffff;">Carrier:</strong> ${shipment.carrier || ''}</p>
-                        <p><strong style="color: #00ffff;">Shipment Type:</strong> ${shipment.shipmentType || ''}</p>
+                        <p><strong style="color: #00ffff;">Origin:</strong> ${safeShipment.origin || ''}</p>
+                        <p><strong style="color: #00ffff;">Destination:</strong> ${safeShipment.destination || ''}</p>
+                        <p><strong style="color: #00ffff;">Carrier:</strong> ${safeShipment.carrier || ''}</p>
+                        <p><strong style="color: #00ffff;">Shipment Type:</strong> ${safeShipment.shipmentType || ''}</p>
                         <p><strong style="color: #00ffff;">Expected Delivery:</strong> ${expectedDelivery}</p>
                     </div>
 
                     <div class="form-section">
                         <h3>📋 Package Details</h3>
-                        <p><strong style="color: #00ffff;">Piece Type:</strong> ${shipment.pieceType || ''}</p>
-                        <p><strong style="color: #00ffff;">Product:</strong> ${shipment.product || ''}</p>
-                        <p><strong style="color: #00ffff;">Quantity:</strong> ${shipment.quantity || ''}</p>
-                        <p><strong style="color: #00ffff;">Description:</strong> ${shipment.description || ''}</p>
-                        <p><strong style="color: #00ffff;">Dimensions:</strong> ${shipment.length || ''}cm x ${shipment.width || ''}cm x ${shipment.height || ''}cm</p>
-                        <p><strong style="color: #00ffff;">Weight:</strong> ${shipment.weight || ''} kg</p>
+                        <p><strong style="color: #00ffff;">Piece Type:</strong> ${safeShipment.pieceType || ''}</p>
+                        <p><strong style="color: #00ffff;">Product:</strong> ${safeShipment.product || ''}</p>
+                        <p><strong style="color: #00ffff;">Quantity:</strong> ${safeShipment.quantity || ''}</p>
+                        <p><strong style="color: #00ffff;">Description:</strong> ${safeShipment.description || ''}</p>
+                        <p><strong style="color: #00ffff;">Dimensions:</strong> ${safeShipment.length || ''}cm x ${safeShipment.width || ''}cm x ${safeShipment.height || ''}cm</p>
+                        <p><strong style="color: #00ffff;">Weight:</strong> ${safeShipment.weight || ''} kg</p>
                     </div>
 
                     <div class="form-section">
                         <h3>💳 Payment Information</h3>
-                        <p><strong style="color: #00ffff;">Payment Mode:</strong> ${shipment.paymentMode || ''}</p>
+                        <p><strong style="color: #00ffff;">Payment Mode:</strong> ${safeShipment.paymentMode || ''}</p>
                         <p><strong style="color: #00ffff;">Freight Cost:</strong> ${freightDisplay}</p>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>📝 Remarks</h3>
+                        <p style="background: rgba(255, 165, 0, 0.1); padding: 1rem; border-left: 4px solid #ffa500; border-radius: 5px;">
+                            ${safeShipment.comment}
+                        </p>
                     </div>
 
                     <div class="form-section">
@@ -1953,6 +1652,8 @@
                     } else {
                         showError('Failed to delete shipment');
                     }
+                } else if (response.status === 401) {
+                    logout();
                 } else {
                     showError('Failed to delete shipment');
                 }
@@ -1964,19 +1665,12 @@
             }
         }
 
-        // ============= INITIALIZE =============
-        document.addEventListener('DOMContentLoaded', checkAuth);
-
         // ============= CLOSE MODAL WHEN CLICKING OUTSIDE =============
         window.onclick = function(event) {
-            const registerModal = document.getElementById('registerModal');
             const viewModal = document.getElementById('viewShipmentModal');
             const statusModal = document.getElementById('updateStatusModal');
             const freightModal = document.getElementById('freightCostModal');
             
-            if (event.target === registerModal) {
-                closeRegisterModal();
-            }
             if (event.target === viewModal) {
                 closeViewModal();
             }

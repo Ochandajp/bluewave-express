@@ -49,9 +49,8 @@ const userSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 });
 
-// Shipment Schema - COMPLETE with ALL fields and strict: false for flexibility
+// Shipment Schema - COMPLETE with ALL fields
 const shipmentSchema = new mongoose.Schema({
-    // Core fields
     trackingNumber: { type: String, unique: true, required: true },
     
     // Sender Information
@@ -73,7 +72,7 @@ const shipmentSchema = new mongoose.Schema({
     carrierRef: { type: String, default: '' },
     shipmentType: { type: String, default: 'ROAD' },
     
-    // Package Details - ALL FIELDS EXPLICITLY DEFINED
+    // Package Details - ALL FIELDS INCLUDED
     product: { type: String, default: '' },
     quantity: { type: String, default: '' },
     pieceType: { type: String, default: '' },
@@ -89,7 +88,7 @@ const shipmentSchema = new mongoose.Schema({
     paymentMode: { type: String, default: 'cash' },
     freightCost: { type: Number, default: 0 },
     
-    // Dates - ALL EXPLICITLY DEFINED
+    // Dates - ALL FIELDS INCLUDED
     expectedDelivery: { type: String, default: '' },
     departureDate: { type: String, default: '' },    // CRITICAL FIELD
     pickupDate: { type: String, default: '' },
@@ -119,9 +118,6 @@ const shipmentSchema = new mongoose.Schema({
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
-}, { 
-    strict: false, // Allow saving fields not defined in schema
-    timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' }
 });
 
 const User = mongoose.model('User', userSchema);
@@ -312,9 +308,14 @@ app.get('/api/setup-admin', async (req, res) => {
 });
 
 // ============= STATIC ROUTES =============
+// UPDATED: Added login route
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
 });
 
 app.get('/admin', (req, res) => {
@@ -327,7 +328,10 @@ app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
 
+        console.log('🔐 Login attempt for username/email:', username);
+
         if (!username || !password) {
+            console.log('❌ Missing username or password');
             return res.status(400).json({ 
                 success: false, 
                 message: 'Username and password required' 
@@ -338,16 +342,37 @@ app.post('/api/login', async (req, res) => {
             $or: [{ username: username }, { email: username }] 
         });
         
+        console.log('📋 User found in database:', user ? 'Yes' : 'No');
+        
         if (!user) {
+            console.log('❌ User not found with username/email:', username);
             return res.status(401).json({ 
                 success: false, 
                 message: 'Invalid credentials' 
             });
         }
 
+        console.log('👤 User details:', {
+            id: user._id,
+            name: user.name,
+            username: user.username,
+            email: user.email,
+            isAdmin: user.isAdmin
+        });
+
+        if (!user.password) {
+            console.log('❌ User has no password stored!');
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Account error - no password set' 
+            });
+        }
+
         const isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log('🔑 Password valid:', isPasswordValid ? 'Yes' : 'No');
         
         if (!isPasswordValid) {
+            console.log('❌ Invalid password for user:', username);
             return res.status(401).json({ 
                 success: false, 
                 message: 'Invalid credentials' 
@@ -355,6 +380,7 @@ app.post('/api/login', async (req, res) => {
         }
 
         if (user.status === 'inactive') {
+            console.log('❌ Account is inactive for user:', username);
             return res.status(403).json({ 
                 success: false, 
                 message: 'Account is deactivated' 
@@ -363,6 +389,7 @@ app.post('/api/login', async (req, res) => {
 
         user.lastLogin = new Date();
         await user.save();
+        console.log('✅ Last login updated for user:', username);
 
         const token = jwt.sign(
             { 
@@ -373,6 +400,8 @@ app.post('/api/login', async (req, res) => {
             JWT_SECRET,
             { expiresIn: '7d' }
         );
+        
+        console.log('✅ JWT token generated successfully');
 
         res.json({ 
             success: true,
@@ -389,8 +418,10 @@ app.post('/api/login', async (req, res) => {
             }
         });
 
+        console.log('✅ Login successful for user:', username);
+
     } catch (error) {
-        console.error('Login error:', error);
+        console.error('❌ Login error:', error);
         res.status(500).json({ 
             success: false, 
             message: 'Server error occurred during login' 
@@ -428,7 +459,7 @@ app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
     try {
         const { trackingNumber } = req.params;
         
-        const shipment = await Shipment.findOne({ trackingNumber });
+        const shipment = await Shipment.findOne({ trackingNumber }).lean();
 
         if (!shipment) {
             return res.status(404).json({ 
@@ -437,8 +468,8 @@ app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
             });
         }
 
-        // Log to verify fields are being returned
-        console.log(`📦 Tracking ${trackingNumber}:`, {
+        console.log('📦 Tracking - Shipment found:', {
+            trackingNumber: shipment.trackingNumber,
             packageType: shipment.packageType,
             packageStatus: shipment.packageStatus,
             departureDate: shipment.departureDate
@@ -457,7 +488,7 @@ app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
     }
 });
 
-// Create new shipment - With ALL fields mapped
+// Create new shipment
 app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
     try {
         console.log('📦 RECEIVED SHIPMENT DATA:', JSON.stringify(req.body, null, 2));
@@ -465,13 +496,6 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
         const data = req.body;
         
         // Validate required fields
-        if (!data.comment) {
-            return res.status(400).json({ 
-                success: false, 
-                message: 'Initial remarks are required' 
-            });
-        }
-
         if (!data.senderName || !data.senderPhone || !data.senderAddress) {
             return res.status(400).json({ 
                 success: false, 
@@ -479,10 +503,24 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             });
         }
 
+        if (!data.recipientName || !data.recipientPhone || !data.deliveryAddress) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Recipient name, phone and delivery address are required' 
+            });
+        }
+
         if (!data.origin || !data.destination) {
             return res.status(400).json({ 
                 success: false, 
                 message: 'Origin and destination are required' 
+            });
+        }
+
+        if (!data.comment) {
+            return res.status(400).json({ 
+                success: false, 
+                message: 'Initial remarks are required' 
             });
         }
         
@@ -496,57 +534,50 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             } while (exists);
         }
 
-        // Create shipment object with ALL fields explicitly set
+        // Create shipment object with ALL fields
         const shipmentData = {
             trackingNumber: trackingNumber,
             
-            // Sender Information
             senderName: data.senderName || '',
             senderEmail: data.senderEmail || '',
             senderPhone: data.senderPhone || '',
             senderAddress: data.senderAddress || '',
             
-            // Recipient Information
             recipientName: data.recipientName || '',
             recipientEmail: data.recipientEmail || '',
             recipientPhone: data.recipientPhone || '',
             deliveryAddress: data.deliveryAddress || '',
             
-            // Shipment Information
             origin: data.origin || '',
             destination: data.destination || '',
             carrier: data.carrier || '',
             shipmentType: data.shipmentType || 'ROAD',
             
-            // Package Details - ALL EXPLICITLY SET
+            // CRITICAL FIELDS
             product: data.product || '',
             quantity: data.quantity ? data.quantity.toString() : '',
             pieceType: data.pieceType || '',
-            packageType: data.packageType || '',        // CRITICAL FIELD
-            packageStatus: data.packageStatus || '',    // CRITICAL FIELD
+            packageType: data.packageType || '',
+            packageStatus: data.packageStatus || '',
             description: data.description || '',
             length: data.length ? data.length.toString() : '',
             width: data.width ? data.width.toString() : '',
             height: data.height ? data.height.toString() : '',
             weight: data.weight ? data.weight.toString() : '',
             
-            // Payment
             paymentMode: data.paymentMode || 'cash',
             freightCost: data.freightCost || 0,
             
-            // Dates - ALL EXPLICITLY SET
+            // CRITICAL FIELDS
             expectedDelivery: data.expectedDelivery || '',
-            departureDate: data.departureDate || '',    // CRITICAL FIELD
+            departureDate: data.departureDate || '',
             pickupDate: data.pickupDate || '',
             
-            // Status
             status: data.status || 'pending',
             
-            // Remarks - CRITICAL FIELD
             remark: data.comment || '',
             comment: data.comment || '',
             
-            // Tracking History
             trackingHistory: [{
                 status: data.status || 'pending',
                 location: data.origin || 'Origin',
@@ -555,42 +586,43 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
                 timestamp: new Date()
             }],
             
-            // Metadata
-            createdBy: req.user.id,
-            createdAt: new Date(),
-            updatedAt: new Date()
+            createdBy: req.user.id
         };
 
-        // Log the data being saved
-        console.log('💾 SAVING TO DATABASE:', {
+        console.log('💾 SAVING TO MONGODB:', {
             trackingNumber: shipmentData.trackingNumber,
             packageType: shipmentData.packageType,
             packageStatus: shipmentData.packageStatus,
-            departureDate: shipmentData.departureDate,
-            comment: shipmentData.comment
+            departureDate: shipmentData.departureDate
         });
 
-        // Create and save
         const shipment = new Shipment(shipmentData);
-        await shipment.save();
+        const savedShipment = await shipment.save();
         
         console.log('✅ SHIPMENT SAVED SUCCESSFULLY!');
-        console.log('Saved ID:', shipment._id);
-        console.log('Saved tracking:', shipment.trackingNumber);
-        console.log('Saved package type:', shipment.packageType);
-        console.log('Saved package status:', shipment.packageStatus);
-        console.log('Saved departure date:', shipment.departureDate);
-        console.log('Saved remarks:', shipment.comment);
+        console.log('Saved fields:', {
+            packageType: savedShipment.packageType,
+            packageStatus: savedShipment.packageStatus,
+            departureDate: savedShipment.departureDate
+        });
 
         res.status(201).json({ 
             success: true,
             message: 'Shipment created successfully', 
-            trackingNumber: shipment.trackingNumber,
-            shipmentId: shipment._id
+            trackingNumber: savedShipment.trackingNumber,
+            shipmentId: savedShipment._id
         });
 
     } catch (error) {
         console.error('❌ ERROR SAVING SHIPMENT:', error);
+        
+        if (error.code === 11000) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Tracking number already exists' 
+            });
+        }
+        
         res.status(500).json({ 
             success: false,
             message: 'Error creating shipment: ' + error.message 
@@ -601,20 +633,9 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
 // Get all shipments (admin)
 app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
     try {
-        const shipments = await Shipment.find().sort({ createdAt: -1 }).lean(); // Use lean() for better performance
+        const shipments = await Shipment.find().sort({ createdAt: -1 }).lean();
         
         console.log(`📋 Found ${shipments.length} shipments`);
-        
-        // Log first shipment to verify all fields are present
-        if (shipments.length > 0) {
-            console.log('Sample shipment fields:', {
-                trackingNumber: shipments[0].trackingNumber,
-                packageType: shipments[0].packageType,
-                packageStatus: shipments[0].packageStatus,
-                departureDate: shipments[0].departureDate,
-                comment: shipments[0].comment
-            });
-        }
         
         res.json({
             success: true,
@@ -639,13 +660,6 @@ app.get('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) => {
                 message: 'Shipment not found' 
             });
         }
-        
-        console.log(`📋 Fetched shipment ${shipment.trackingNumber} with fields:`, {
-            packageType: shipment.packageType,
-            packageStatus: shipment.packageStatus,
-            departureDate: shipment.departureDate,
-            comment: shipment.comment
-        });
         
         res.json({
             success: true,
@@ -799,37 +813,31 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
     }
 });
 
-// Debug route to check database with detailed field analysis
+// DEBUG: Check database contents
 app.get('/api/debug/check-db', authenticate, isAdmin, async (req, res) => {
     try {
         const count = await Shipment.countDocuments();
-        const allShipments = await Shipment.find().limit(5).lean();
+        const allShipments = await Shipment.find().limit(10).lean();
         
-        // Analyze field presence
-        const fieldAnalysis = {
+        const fieldPresence = {
             totalShipments: count,
-            withPackageType: await Shipment.countDocuments({ packageType: { $exists: true, $ne: '' } }),
-            withPackageStatus: await Shipment.countDocuments({ packageStatus: { $exists: true, $ne: '' } }),
-            withDepartureDate: await Shipment.countDocuments({ departureDate: { $exists: true, $ne: '' } }),
-            withComment: await Shipment.countDocuments({ comment: { $exists: true, $ne: '' } })
+            withPackageType: await Shipment.countDocuments({ packageType: { $exists: true } }),
+            withPackageStatus: await Shipment.countDocuments({ packageStatus: { $exists: true } }),
+            withDepartureDate: await Shipment.countDocuments({ departureDate: { $exists: true } }),
+            withComment: await Shipment.countDocuments({ comment: { $exists: true } })
         };
         
         res.json({
             success: true,
             databaseConnected: mongoose.connection.readyState === 1,
             databaseName: mongoose.connection.name,
-            collections: {
-                shipments: count,
-                users: await User.countDocuments()
-            },
-            fieldAnalysis: fieldAnalysis,
+            fieldPresence,
             sampleShipments: allShipments.map(s => ({
                 trackingNumber: s.trackingNumber,
-                packageType: s.packageType || '(empty)',
-                packageStatus: s.packageStatus || '(empty)',
-                departureDate: s.departureDate || '(empty)',
-                comment: s.comment || '(empty)',
-                createdAt: s.createdAt
+                packageType: s.packageType || 'MISSING',
+                packageStatus: s.packageStatus || 'MISSING',
+                departureDate: s.departureDate || 'MISSING',
+                comment: s.comment || 'MISSING'
             }))
         });
     } catch (error) {
@@ -837,46 +845,41 @@ app.get('/api/debug/check-db', authenticate, isAdmin, async (req, res) => {
     }
 });
 
-// Force update all shipments to ensure fields exist
+// DEBUG: Fix missing fields in existing shipments
 app.post('/api/debug/fix-shipments', authenticate, isAdmin, async (req, res) => {
     try {
         const shipments = await Shipment.find({});
-        let updated = 0;
+        let fixed = 0;
         
         for (const shipment of shipments) {
             const updates = {};
-            let needsUpdate = false;
             
             if (!shipment.packageType && shipment.packageType !== '') {
                 updates.packageType = '';
-                needsUpdate = true;
+                fixed++;
             }
             if (!shipment.packageStatus && shipment.packageStatus !== '') {
                 updates.packageStatus = '';
-                needsUpdate = true;
+                fixed++;
             }
             if (!shipment.departureDate && shipment.departureDate !== '') {
                 updates.departureDate = '';
-                needsUpdate = true;
+                fixed++;
             }
-            if (!shipment.comment && shipment.comment !== '') {
-                updates.comment = shipment.remark || '';
-                needsUpdate = true;
+            if (!shipment.comment && shipment.remark) {
+                updates.comment = shipment.remark;
+                fixed++;
             }
             
-            if (needsUpdate) {
-                await Shipment.updateOne(
-                    { _id: shipment._id },
-                    { $set: updates }
-                );
-                updated++;
+            if (Object.keys(updates).length > 0) {
+                await Shipment.updateOne({ _id: shipment._id }, { $set: updates });
+                console.log(`Fixed shipment ${shipment.trackingNumber}:`, updates);
             }
         }
         
         res.json({
             success: true,
-            message: `Fixed ${updated} shipments`,
-            totalProcessed: shipments.length
+            message: `Fixed ${fixed} fields across ${shipments.length} shipments`
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -908,13 +911,12 @@ app.use((err, req, res, next) => {
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`\n🚀 Server running on port ${PORT}`);
     console.log(`📱 Test API: http://localhost:${PORT}/api/test`);
-    console.log(`📝 Register: http://localhost:${PORT}/api/register (POST)`);
     console.log(`🔧 Setup Admin: http://localhost:${PORT}/api/setup-admin`);
-    console.log(`🔑 Login: http://localhost:${PORT}/api/login (POST)`);
     console.log(`📦 Public Tracking: http://localhost:${PORT}`);
+    console.log(`🔐 Login Page: http://localhost:${PORT}/login`);
     console.log(`👤 Admin Panel: http://localhost:${PORT}/admin`);
-    console.log(`🔍 Debug DB: http://localhost:${PORT}/api/debug/check-db (need auth)`);
-    console.log(`🔧 Fix DB: http://localhost:${PORT}/api/debug/fix-shipments (need auth)\n`);
+    console.log(`🔍 Debug DB: http://localhost:${PORT}/api/debug/check-db`);
+    console.log(`🔧 Fix DB: http://localhost:${PORT}/api/debug/fix-shipments (POST)\n`);
 });
 
 process.on('SIGTERM', () => {
