@@ -1017,12 +1017,6 @@
                     <li onclick="showSection('create')">
                         <span>➕</span> Create Shipment
                     </li>
-                    <li onclick="showSection('senders')">
-                        <span>👤</span> Manage Senders
-                    </li>
-                    <li onclick="showSection('recipients')">
-                        <span>👥</span> Manage Recipients
-                    </li>
                 </ul>
             </div>
 
@@ -1057,14 +1051,6 @@
                         <div class="stat-card">
                             <div class="stat-title">Pending</div>
                             <div class="stat-number" id="pendingShipments">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-title">Total Senders</div>
-                            <div class="stat-number" id="totalSenders">0</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-title">Total Recipients</div>
-                            <div class="stat-number" id="totalRecipients">0</div>
                         </div>
                     </div>
 
@@ -1251,7 +1237,6 @@
                                             <option value="AIR">AIR</option>
                                             <option value="ROAD">ROAD</option>
                                             <option value="WATER">WATER</option>
-                                            <option value="RAIL">RAIL</option>
                                         </select>
                                     </div>
                                     <div class="form-group">
@@ -1337,125 +1322,7 @@
                         </form>
                     </div>
                 </div>
-
-                <!-- Manage Senders Section -->
-                <div id="sendersSectionContent" style="display: none;">
-                    <div class="section-header">
-                        <h2 class="section-title">Manage Senders</h2>
-                        <button class="btn-primary" onclick="showAddSenderModal()">+ Add Sender</button>
-                    </div>
-
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Address</th>
-                                    <th>Company</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="sendersTableBody">
-                                <tr>
-                                    <td colspan="6" style="text-align: center; padding: 2rem;">Loading senders...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Manage Recipients Section -->
-                <div id="recipientsSectionContent" style="display: none;">
-                    <div class="section-header">
-                        <h2 class="section-title">Manage Recipients</h2>
-                        <button class="btn-primary" onclick="showAddRecipientModal()">+ Add Recipient</button>
-                    </div>
-
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Phone</th>
-                                    <th>Address</th>
-                                    <th>Company</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="recipientsTableBody">
-                                <tr>
-                                    <td colspan="6" style="text-align: center; padding: 2rem;">Loading recipients...</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
             </div>
-        </div>
-    </div>
-
-    <!-- Add Sender Modal -->
-    <div class="modal" id="addSenderModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>➕ Add New Sender</h2>
-                <span class="close-modal" onclick="closeAddSenderModal()">&times;</span>
-            </div>
-            <div class="form-group">
-                <label class="required-field">Name</label>
-                <input type="text" id="newSenderName" placeholder="Enter sender name" required>
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="newSenderEmail" placeholder="sender@email.com">
-            </div>
-            <div class="form-group">
-                <label class="required-field">Phone</label>
-                <input type="tel" id="newSenderPhone" placeholder="+1234567890" required>
-            </div>
-            <div class="form-group">
-                <label class="required-field">Address</label>
-                <textarea id="newSenderAddress" rows="2" placeholder="Full address" required></textarea>
-            </div>
-            <div class="form-group">
-                <label>Company</label>
-                <input type="text" id="newSenderCompany" placeholder="Company name (optional)">
-            </div>
-            <button class="btn-submit" onclick="createSender()">Save Sender</button>
-        </div>
-    </div>
-
-    <!-- Add Recipient Modal -->
-    <div class="modal" id="addRecipientModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <h2>➕ Add New Recipient</h2>
-                <span class="close-modal" onclick="closeAddRecipientModal()">&times;</span>
-            </div>
-            <div class="form-group">
-                <label class="required-field">Name</label>
-                <input type="text" id="newRecipientName" placeholder="Enter recipient name" required>
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="newRecipientEmail" placeholder="recipient@email.com">
-            </div>
-            <div class="form-group">
-                <label class="required-field">Phone</label>
-                <input type="tel" id="newRecipientPhone" placeholder="+1234567890" required>
-            </div>
-            <div class="form-group">
-                <label class="required-field">Address</label>
-                <textarea id="newRecipientAddress" rows="2" placeholder="Full address" required></textarea>
-            </div>
-            <div class="form-group">
-                <label>Company</label>
-                <input type="text" id="newRecipientCompany" placeholder="Company name (optional)">
-            </div>
-            <button class="btn-submit" onclick="createRecipient()">Save Recipient</button>
         </div>
     </div>
 
@@ -1593,242 +1460,6 @@
             }
         });
 
-        // ============= SENDER MODAL FUNCTIONS =============
-        function showAddSenderModal() {
-            document.getElementById('addSenderModal').classList.add('active');
-        }
-
-        function closeAddSenderModal() {
-            document.getElementById('addSenderModal').classList.remove('active');
-            document.getElementById('newSenderName').value = '';
-            document.getElementById('newSenderEmail').value = '';
-            document.getElementById('newSenderPhone').value = '';
-            document.getElementById('newSenderAddress').value = '';
-            document.getElementById('newSenderCompany').value = '';
-        }
-
-        // ============= RECIPIENT MODAL FUNCTIONS =============
-        function showAddRecipientModal() {
-            document.getElementById('addRecipientModal').classList.add('active');
-        }
-
-        function closeAddRecipientModal() {
-            document.getElementById('addRecipientModal').classList.remove('active');
-            document.getElementById('newRecipientName').value = '';
-            document.getElementById('newRecipientEmail').value = '';
-            document.getElementById('newRecipientPhone').value = '';
-            document.getElementById('newRecipientAddress').value = '';
-            document.getElementById('newRecipientCompany').value = '';
-        }
-
-        // ============= CREATE SENDER =============
-        async function createSender() {
-            const name = document.getElementById('newSenderName').value.trim();
-            const email = document.getElementById('newSenderEmail').value.trim();
-            const phone = document.getElementById('newSenderPhone').value.trim();
-            const address = document.getElementById('newSenderAddress').value.trim();
-            const company = document.getElementById('newSenderCompany').value.trim();
-
-            if (!name || !phone || !address) {
-                showError('Name, phone and address are required');
-                return;
-            }
-
-            setLoading(true);
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/api/senders`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ name, email, phone, address, company })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    showSuccess('✅ Sender created successfully');
-                    closeAddSenderModal();
-                    loadSenders();
-                } else {
-                    showError(data.message || 'Failed to create sender');
-                }
-            } catch (error) {
-                console.error('Error creating sender:', error);
-                showError('Network error');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // ============= CREATE RECIPIENT =============
-        async function createRecipient() {
-            const name = document.getElementById('newRecipientName').value.trim();
-            const email = document.getElementById('newRecipientEmail').value.trim();
-            const phone = document.getElementById('newRecipientPhone').value.trim();
-            const address = document.getElementById('newRecipientAddress').value.trim();
-            const company = document.getElementById('newRecipientCompany').value.trim();
-
-            if (!name || !phone || !address) {
-                showError('Name, phone and address are required');
-                return;
-            }
-
-            setLoading(true);
-
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/api/recipients`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ name, email, phone, address, company })
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    showSuccess('✅ Recipient created successfully');
-                    closeAddRecipientModal();
-                    loadRecipients();
-                } else {
-                    showError(data.message || 'Failed to create recipient');
-                }
-            } catch (error) {
-                console.error('Error creating recipient:', error);
-                showError('Network error');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // ============= LOAD SENDERS =============
-        async function loadSenders() {
-            setLoading(true);
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/api/senders`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success) {
-                        displaySenders(data.senders);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading senders:', error);
-                showError('Failed to load senders');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // ============= DISPLAY SENDERS =============
-        function displaySenders(senders) {
-            const tbody = document.getElementById('sendersTableBody');
-            
-            if (!senders || senders.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No senders found</td></tr>';
-                return;
-            }
-
-            let html = '';
-            senders.forEach(s => {
-                html += `
-                    <tr>
-                        <td>${s.name}</td>
-                        <td>${s.email || 'N/A'}</td>
-                        <td>${s.phone}</td>
-                        <td>${s.address}</td>
-                        <td>${s.company || 'N/A'}</td>
-                        <td>
-                            <button class="action-btn btn-view" onclick="useSender('${s._id}', '${s.name}', '${s.email}', '${s.phone}', '${s.address}')">Use</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            tbody.innerHTML = html;
-        }
-
-        // ============= USE SENDER IN FORM =============
-        function useSender(id, name, email, phone, address) {
-            document.getElementById('senderName').value = name;
-            document.getElementById('senderEmail').value = email;
-            document.getElementById('senderPhone').value = phone;
-            document.getElementById('senderAddress').value = address;
-            showSection('create');
-            showSuccess('✅ Sender details loaded');
-        }
-
-        // ============= LOAD RECIPIENTS =============
-        async function loadRecipients() {
-            setLoading(true);
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${API_URL}/api/recipients`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success) {
-                        displayRecipients(data.recipients);
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading recipients:', error);
-                showError('Failed to load recipients');
-            } finally {
-                setLoading(false);
-            }
-        }
-
-        // ============= DISPLAY RECIPIENTS =============
-        function displayRecipients(recipients) {
-            const tbody = document.getElementById('recipientsTableBody');
-            
-            if (!recipients || recipients.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; padding: 2rem;">No recipients found</td></tr>';
-                return;
-            }
-
-            let html = '';
-            recipients.forEach(r => {
-                html += `
-                    <tr>
-                        <td>${r.name}</td>
-                        <td>${r.email || 'N/A'}</td>
-                        <td>${r.phone}</td>
-                        <td>${r.address}</td>
-                        <td>${r.company || 'N/A'}</td>
-                        <td>
-                            <button class="action-btn btn-view" onclick="useRecipient('${r._id}', '${r.name}', '${r.email}', '${r.phone}', '${r.address}')">Use</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            
-            tbody.innerHTML = html;
-        }
-
-        // ============= USE RECIPIENT IN FORM =============
-        function useRecipient(id, name, email, phone, address) {
-            document.getElementById('recipientName').value = name;
-            document.getElementById('recipientEmail').value = email;
-            document.getElementById('recipientPhone').value = phone;
-            document.getElementById('deliveryAddress').value = address;
-            showSection('create');
-            showSuccess('✅ Recipient details loaded');
-        }
-
         // ============= STATUS MODAL FUNCTIONS =============
         function showUpdateStatusModal(shipmentId, currentStatus) {
             currentShipmentId = shipmentId;
@@ -1877,10 +1508,12 @@
 
         // ============= SHOW SECTIONS =============
         function showSection(section) {
-            const menuItems = document.querySelectorAll('.sidebar-menu li');
-            menuItems.forEach(item => item.classList.remove('active'));
+            const activeItem = document.querySelector('.sidebar-menu li.active');
+            if (activeItem) {
+                activeItem.classList.remove('active');
+            }
             
-            // Find and activate the clicked menu item
+            const menuItems = document.querySelectorAll('.sidebar-menu li');
             for (let item of menuItems) {
                 if (section === 'dashboard' && item.textContent.includes('Dashboard')) {
                     item.classList.add('active');
@@ -1891,20 +1524,12 @@
                 } else if (section === 'create' && item.textContent.includes('Create')) {
                     item.classList.add('active');
                     break;
-                } else if (section === 'senders' && item.textContent.includes('Manage Senders')) {
-                    item.classList.add('active');
-                    break;
-                } else if (section === 'recipients' && item.textContent.includes('Manage Recipients')) {
-                    item.classList.add('active');
-                    break;
                 }
             }
             
             document.getElementById('dashboardSectionContent').style.display = 'none';
             document.getElementById('shipmentsSectionContent').style.display = 'none';
             document.getElementById('createSectionContent').style.display = 'none';
-            document.getElementById('sendersSectionContent').style.display = 'none';
-            document.getElementById('recipientsSectionContent').style.display = 'none';
             
             if (section === 'dashboard') {
                 document.getElementById('dashboardSectionContent').style.display = 'block';
@@ -1915,12 +1540,6 @@
             } else if (section === 'create') {
                 document.getElementById('createSectionContent').style.display = 'block';
                 generateTrackingNumber();
-            } else if (section === 'senders') {
-                document.getElementById('sendersSectionContent').style.display = 'block';
-                loadSenders();
-            } else if (section === 'recipients') {
-                document.getElementById('recipientsSectionContent').style.display = 'block';
-                loadRecipients();
             }
         }
 
@@ -1965,27 +1584,57 @@
             try {
                 const token = localStorage.getItem('token');
                 
-                const response = await fetch(`${API_URL}/api/admin/stats`, {
+                try {
+                    const statsResponse = await fetch(`${API_URL}/api/admin/stats`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (statsResponse.ok) {
+                        const data = await statsResponse.json();
+                        if (data.success) {
+                            document.getElementById('totalShipments').textContent = data.totalShipments || 0;
+                            document.getElementById('activeShipments').textContent = data.activeShipments || 0;
+                            document.getElementById('deliveredShipments').textContent = data.deliveredShipments || 0;
+                            document.getElementById('pendingShipments').textContent = data.pendingShipments || 0;
+                            
+                            if (data.recentShipments) {
+                                displayRecentShipments(data.recentShipments);
+                                setLoading(false);
+                                return;
+                            }
+                        }
+                    }
+                } catch (statsError) {
+                    console.log('Stats endpoint not available, loading shipments directly');
+                }
+                
+                const shipmentsResponse = await fetch(`${API_URL}/api/admin/shipments`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success) {
-                        document.getElementById('totalShipments').textContent = data.totalShipments || 0;
-                        document.getElementById('activeShipments').textContent = data.activeShipments || 0;
-                        document.getElementById('deliveredShipments').textContent = data.deliveredShipments || 0;
-                        document.getElementById('pendingShipments').textContent = data.pendingShipments || 0;
-                        document.getElementById('totalSenders').textContent = data.totalSenders || 0;
-                        document.getElementById('totalRecipients').textContent = data.totalRecipients || 0;
+                if (shipmentsResponse.ok) {
+                    const data = await shipmentsResponse.json();
+                    if (data.success && data.shipments) {
+                        const shipments = data.shipments;
                         
-                        if (data.recentShipments) {
-                            displayRecentShipments(data.recentShipments);
-                        }
+                        const total = shipments.length;
+                        const active = shipments.filter(s => s.status !== 'delivered').length;
+                        const delivered = shipments.filter(s => s.status === 'delivered').length;
+                        const pending = shipments.filter(s => s.status === 'pending').length;
+                        
+                        document.getElementById('totalShipments').textContent = total;
+                        document.getElementById('activeShipments').textContent = active;
+                        document.getElementById('deliveredShipments').textContent = delivered;
+                        document.getElementById('pendingShipments').textContent = pending;
+                        
+                        displayRecentShipments(shipments.slice(0, 5));
                     }
+                } else if (shipmentsResponse.status === 401) {
+                    logout();
                 }
             } catch (error) {
                 console.error('Error loading dashboard:', error);
+                showError('Failed to load dashboard. Please check your connection.');
             } finally {
                 setLoading(false);
             }
@@ -2112,7 +1761,7 @@
             loadShipments();
         }
 
-        // ============= CREATE SHIPMENT =============
+        // ============= FIXED: CREATE SHIPMENT - NOW SENDS ALL FIELDS =============
         async function createShipment() {
             try {
                 // Validate required fields
@@ -2147,24 +1796,28 @@
                     return;
                 }
 
-                // Build shipment data
+                // Build shipment data with ALL fields explicitly mapped
                 const shipmentData = {
+                    // SENDER INFORMATION - THESE WERE MISSING BEFORE
                     senderName: senderName,
                     senderEmail: document.getElementById('senderEmail')?.value || '',
                     senderPhone: senderPhone,
                     senderAddress: senderAddress,
                     
+                    // RECIPIENT INFORMATION
                     recipientName: recipientName,
                     recipientEmail: document.getElementById('recipientEmail')?.value || '',
                     recipientPhone: recipientPhone,
                     deliveryAddress: deliveryAddress,
                     
+                    // SHIPMENT INFORMATION
                     origin: origin,
                     destination: destination,
                     carrier: document.getElementById('carrier')?.value || '',
                     shipmentType: document.getElementById('shipmentType')?.value || 'ROAD',
                     status: document.getElementById('status')?.value || 'pending',
                     
+                    // PACKAGE DETAILS
                     pieceType: document.getElementById('pieceType')?.value || '',
                     product: document.getElementById('product')?.value || '',
                     quantity: document.getElementById('quantity')?.value || '',
@@ -2176,19 +1829,23 @@
                     height: document.getElementById('height')?.value || '',
                     weight: document.getElementById('weight')?.value || '',
                     
+                    // DATES
                     departureDate: document.getElementById('departureDate')?.value || '',
                     pickupDate: document.getElementById('pickupDate')?.value || '',
                     expectedDelivery: document.getElementById('expectedDelivery')?.value || '',
                     
+                    // PAYMENT
                     paymentMode: document.getElementById('paymentMode')?.value || 'cash',
                     freightCost: document.getElementById('freightCost')?.value ? parseFloat(document.getElementById('freightCost').value) : 0,
                     
+                    // REMARKS
                     comment: comment,
                     
+                    // TRACKING
                     trackingNumber: document.getElementById('trackingNumber')?.value || ''
                 };
 
-                console.log('📦 Sending shipment data:', shipmentData);
+                console.log('📦 SENDING SHIPMENT DATA:', shipmentData);
                 setLoading(true);
 
                 const token = localStorage.getItem('token');
@@ -2203,7 +1860,7 @@
                 });
 
                 const data = await response.json();
-                console.log('📦 Create shipment response:', data);
+                console.log('📦 CREATE SHIPMENT RESPONSE:', data);
 
                 if (response.ok && data.success) {
                     showSuccess(`✅ Shipment created successfully! Tracking: ${data.trackingNumber}`);
@@ -2217,7 +1874,7 @@
                     showError(data.message || 'Failed to create shipment');
                 }
             } catch (error) {
-                console.error('🔥 Error creating shipment:', error);
+                console.error('🔥 ERROR CREATING SHIPMENT:', error);
                 showError('Network error: ' + error.message);
             } finally {
                 setLoading(false);
@@ -2387,7 +2044,6 @@
         function displayShipmentDetails(shipment) {
             const detailsDiv = document.getElementById('viewShipmentDetails');
             
-            // Safely get values with fallbacks
             const safeShipment = {
                 // Basic Info
                 _id: shipment._id || 'N/A',
@@ -2599,8 +2255,6 @@
             const viewModal = document.getElementById('viewShipmentModal');
             const statusModal = document.getElementById('updateStatusModal');
             const freightModal = document.getElementById('freightCostModal');
-            const addSenderModal = document.getElementById('addSenderModal');
-            const addRecipientModal = document.getElementById('addRecipientModal');
             
             if (event.target === viewModal) {
                 closeViewModal();
@@ -2610,12 +2264,6 @@
             }
             if (event.target === freightModal) {
                 closeFreightCostModal();
-            }
-            if (event.target === addSenderModal) {
-                closeAddSenderModal();
-            }
-            if (event.target === addRecipientModal) {
-                closeAddRecipientModal();
             }
         }
     </script>

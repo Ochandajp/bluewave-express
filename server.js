@@ -19,10 +19,10 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Serve static files
+// Serve static files from current directory
 app.use(express.static(path.join(__dirname)));
 
-// Log all requests
+// Log all requests for debugging
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
@@ -55,65 +55,50 @@ const userSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 });
 
-// Sender Schema (NEW)
-const senderSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    name: { type: String, required: true },
-    email: String,
-    phone: { type: String, required: true },
-    address: { type: String, required: true },
-    company: String,
-    taxId: String,
-    createdAt: { type: Date, default: Date.now }
-});
-
-// Recipient Schema (NEW)
-const recipientSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    name: { type: String, required: true },
-    email: String,
-    phone: { type: String, required: true },
-    address: { type: String, required: true },
-    company: String,
-    createdAt: { type: Date, default: Date.now }
-});
-
-// Shipment Schema (UPDATED)
+// Shipment Schema - ALREADY HAS ALL FIELDS INCLUDING SENDER INFO
 const shipmentSchema = new mongoose.Schema({
     trackingNumber: { type: String, unique: true, required: true },
     
-    // References
-    senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Sender', required: true },
-    recipientId: { type: mongoose.Schema.Types.ObjectId, ref: 'Recipient', required: true },
-    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+    // Sender Information
+    senderName: { type: String, default: '' },
+    senderEmail: { type: String, default: '' },
+    senderPhone: { type: String, default: '' },
+    senderAddress: { type: String, default: '' },
     
-    // Shipment Details
-    origin: { type: String, required: true },
-    destination: { type: String, required: true },
-    carrier: String,
-    carrierRef: String,
-    shipmentType: { type: String, enum: ['AIR', 'ROAD', 'WATER', 'RAIL'], default: 'ROAD' },
+    // Recipient Information
+    recipientName: { type: String, default: '' },
+    recipientEmail: { type: String, default: '' },
+    recipientPhone: { type: String, default: '' },
+    deliveryAddress: { type: String, default: '' },
+    
+    // Shipment Information
+    origin: { type: String, default: '' },
+    destination: { type: String, default: '' },
+    carrier: { type: String, default: '' },
+    carrierRef: { type: String, default: '' },
+    shipmentType: { type: String, default: 'ROAD' },
     
     // Package Details
-    packageType: String,
-    packageStatus: String,
-    product: String,
-    quantity: String,
-    pieceType: String,
-    description: String,
-    length: String,
-    width: String,
-    height: String,
-    weight: String,
+    product: { type: String, default: '' },
+    quantity: { type: String, default: '' },
+    pieceType: { type: String, default: '' },
+    packageType: { type: String, default: '' },
+    packageStatus: { type: String, default: '' },
+    description: { type: String, default: '' },
+    length: { type: String, default: '' },
+    width: { type: String, default: '' },
+    height: { type: String, default: '' },
+    weight: { type: String, default: '' },
     
     // Payment
     paymentMode: { type: String, default: 'cash' },
     freightCost: { type: Number, default: 0 },
     
     // Dates
-    departureDate: String,
-    pickupDate: String,
-    expectedDelivery: String,
+    expectedDelivery: { type: String, default: '' },
+    departureDate: { type: String, default: '' },
+    pickupDate: { type: String, default: '' },
+    departureTime: { type: String, default: '' },
     
     // Status
     status: { 
@@ -123,8 +108,8 @@ const shipmentSchema = new mongoose.Schema({
     },
     
     // Remarks
-    remark: String,
-    comment: String,
+    remark: { type: String, default: '' },
+    comment: { type: String, default: '' },
     
     // Tracking History
     trackingHistory: [{
@@ -135,22 +120,14 @@ const shipmentSchema = new mongoose.Schema({
         timestamp: { type: Date, default: Date.now }
     }],
     
+    // Metadata
+    createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
 });
 
-// Shipment Detail Schema (NEW - for additional flexible details)
-const shipmentDetailSchema = new mongoose.Schema({
-    shipmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Shipment', required: true },
-    details: mongoose.Schema.Types.Mixed,
-    createdAt: { type: Date, default: Date.now }
-});
-
 const User = mongoose.model('User', userSchema);
-const Sender = mongoose.model('Sender', senderSchema);
-const Recipient = mongoose.model('Recipient', recipientSchema);
 const Shipment = mongoose.model('Shipment', shipmentSchema);
-const ShipmentDetail = mongoose.model('ShipmentDetail', shipmentDetailSchema);
 
 // JWT Secret
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_change_this_in_production';
@@ -336,6 +313,40 @@ app.get('/api/setup-admin', async (req, res) => {
     }
 });
 
+// ============= STATIC ROUTES =============
+
+// Serve index.html at root
+app.get('/', (req, res) => {
+    const filePath = path.join(__dirname, 'index.html');
+    if (fs.existsSync(filePath)) {
+        res.sendFile(filePath);
+    } else {
+        res.status(404).send('index.html not found');
+    }
+});
+
+// Serve admin.html at /admin
+app.get('/admin', (req, res) => {
+    const filePath = path.join(__dirname, 'admin.html');
+    console.log('Looking for admin.html at:', filePath);
+    
+    if (fs.existsSync(filePath)) {
+        console.log('✅ admin.html found, serving...');
+        res.sendFile(filePath);
+    } else {
+        console.error('❌ admin.html NOT FOUND at:', filePath);
+        res.status(404).send(`
+            <h1>admin.html not found</h1>
+            <p>Looking for: ${filePath}</p>
+            <p>Current directory: ${__dirname}</p>
+            <p>Files in directory:</p>
+            <ul>
+                ${fs.readdirSync(__dirname).map(file => `<li>${file}</li>`).join('')}
+            </ul>
+        `);
+    }
+});
+
 // ============= LOGIN ROUTE =============
 
 app.post('/api/login', async (req, res) => {
@@ -413,97 +424,60 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// ============= SENDER ROUTES (NEW) =============
+// ============= USER PROFILE ROUTE =============
 
-// Create a new sender
-app.post('/api/senders', authenticate, async (req, res) => {
+app.get('/api/user', authenticate, async (req, res) => {
     try {
-        const senderData = {
-            ...req.body,
-            userId: req.user.id
-        };
-        
-        const sender = new Sender(senderData);
-        await sender.save();
-        
-        res.status(201).json({
-            success: true,
-            message: 'Sender created successfully',
-            sender
-        });
-    } catch (error) {
-        console.error('Error creating sender:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating sender'
-        });
-    }
-});
-
-// Get all senders
-app.get('/api/senders', authenticate, async (req, res) => {
-    try {
-        const senders = await Sender.find({ userId: req.user.id });
+        const user = await User.findById(req.user.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ 
+                success: false, 
+                message: 'User not found' 
+            });
+        }
         res.json({
             success: true,
-            senders
+            user
         });
     } catch (error) {
-        console.error('Error fetching senders:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching senders'
+        res.status(500).json({ 
+            success: false, 
+            message: 'Error fetching user' 
         });
     }
 });
 
-// ============= RECIPIENT ROUTES (NEW) =============
+// ============= SHIPMENT ROUTES =============
 
-// Create a new recipient
-app.post('/api/recipients', authenticate, async (req, res) => {
+// Public tracking route
+app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
     try {
-        const recipientData = {
-            ...req.body,
-            userId: req.user.id
-        };
+        const { trackingNumber } = req.params;
         
-        const recipient = new Recipient(recipientData);
-        await recipient.save();
-        
-        res.status(201).json({
-            success: true,
-            message: 'Recipient created successfully',
-            recipient
-        });
-    } catch (error) {
-        console.error('Error creating recipient:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating recipient'
-        });
-    }
-});
+        const shipment = await Shipment.findOne({ trackingNumber });
 
-// Get all recipients
-app.get('/api/recipients', authenticate, async (req, res) => {
-    try {
-        const recipients = await Recipient.find({ userId: req.user.id });
+        if (!shipment) {
+            return res.status(404).json({ 
+                success: false,
+                message: 'Shipment not found' 
+            });
+        }
+
         res.json({
             success: true,
-            recipients
+            shipment
         });
     } catch (error) {
-        console.error('Error fetching recipients:', error);
-        res.status(500).json({
+        console.error('Tracking error:', error);
+        res.status(500).json({ 
             success: false,
-            message: 'Error fetching recipients'
+            message: 'Error tracking shipment' 
         });
     }
 });
 
-// ============= SHIPMENT ROUTES (UPDATED) =============
-
-// Create new shipment with references
+// ============= FIXED: CREATE NEW SHIPMENT ROUTE =============
+// This now properly saves ALL fields including sender information
 app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
     try {
         console.log('📦 RECEIVED SHIPMENT DATA:', JSON.stringify(req.body, null, 2));
@@ -520,56 +494,30 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             } while (exists);
         }
 
-        // Create or find sender
-        let sender = await Sender.findOne({ 
-            phone: data.senderPhone,
-            userId: req.user.id 
-        });
-        
-        if (!sender) {
-            sender = new Sender({
-                userId: req.user.id,
-                name: data.senderName,
-                email: data.senderEmail,
-                phone: data.senderPhone,
-                address: data.senderAddress
-            });
-            await sender.save();
-        }
-
-        // Create or find recipient
-        let recipient = await Recipient.findOne({ 
-            phone: data.recipientPhone,
-            userId: req.user.id 
-        });
-        
-        if (!recipient) {
-            recipient = new Recipient({
-                userId: req.user.id,
-                name: data.recipientName,
-                email: data.recipientEmail,
-                phone: data.recipientPhone,
-                address: data.deliveryAddress
-            });
-            await recipient.save();
-        }
-
-        // Create shipment with references
+        // Create shipment object with ALL fields explicitly mapped
+        // This ensures EVERY field from the frontend is saved
         const shipmentData = {
             trackingNumber: trackingNumber,
             
-            // References
-            senderId: sender._id,
-            recipientId: recipient._id,
-            createdBy: req.user.id,
+            // SENDER INFORMATION - THESE WERE MISSING BEFORE
+            senderName: data.senderName || '',
+            senderEmail: data.senderEmail || '',
+            senderPhone: data.senderPhone || '',
+            senderAddress: data.senderAddress || '',
             
-            // Shipment Information
+            // RECIPIENT INFORMATION
+            recipientName: data.recipientName || '',
+            recipientEmail: data.recipientEmail || '',
+            recipientPhone: data.recipientPhone || '',
+            deliveryAddress: data.deliveryAddress || '',
+            
+            // SHIPMENT INFORMATION
             origin: data.origin || '',
             destination: data.destination || '',
             carrier: data.carrier || '',
             shipmentType: data.shipmentType || 'ROAD',
             
-            // Package Details
+            // PACKAGE DETAILS
             product: data.product || '',
             quantity: data.quantity ? data.quantity.toString() : '',
             pieceType: data.pieceType || '',
@@ -581,23 +529,23 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
             height: data.height ? data.height.toString() : '',
             weight: data.weight ? data.weight.toString() : '',
             
-            // Payment
+            // PAYMENT
             paymentMode: data.paymentMode || 'cash',
             freightCost: data.freightCost || 0,
             
-            // Dates
+            // DATES
             expectedDelivery: data.expectedDelivery || '',
             departureDate: data.departureDate || '',
             pickupDate: data.pickupDate || '',
             
-            // Status
+            // STATUS
             status: data.status || 'pending',
             
-            // Remarks
+            // REMARKS
             remark: data.comment || '',
             comment: data.comment || '',
             
-            // Tracking History
+            // TRACKING HISTORY
             trackingHistory: [{
                 status: data.status || 'pending',
                 location: data.origin || 'Origin',
@@ -606,34 +554,31 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
                 timestamp: new Date()
             }],
             
+            // METADATA
+            createdBy: req.user.id,
             createdAt: new Date(),
             updatedAt: new Date()
         };
 
+        console.log('📦 SAVING SHIPMENT WITH DATA:', shipmentData);
+        
         const shipment = new Shipment(shipmentData);
         await shipment.save();
         
-        // Create additional details if provided
-        if (data.additionalDetails) {
-            const shipmentDetail = new ShipmentDetail({
-                shipmentId: shipment._id,
-                details: data.additionalDetails
-            });
-            await shipmentDetail.save();
-        }
-        
         console.log('✅ SHIPMENT SAVED SUCCESSFULLY!');
-        console.log('Saved tracking:', shipment.trackingNumber);
-
-        // Populate sender and recipient for response
-        await shipment.populate('senderId recipientId');
+        console.log('✅ Tracking:', shipment.trackingNumber);
+        console.log('✅ Sender Name:', shipment.senderName);
+        console.log('✅ Sender Phone:', shipment.senderPhone);
+        console.log('✅ Sender Address:', shipment.senderAddress);
+        console.log('✅ Recipient Name:', shipment.recipientName);
+        console.log('✅ Origin:', shipment.origin);
+        console.log('✅ Destination:', shipment.destination);
 
         res.status(201).json({ 
             success: true,
             message: 'Shipment created successfully', 
             trackingNumber: shipment.trackingNumber,
-            shipmentId: shipment._id,
-            shipment: shipment
+            shipmentId: shipment._id
         });
 
     } catch (error) {
@@ -645,33 +590,14 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
     }
 });
 
-// Get all shipments with populated data
+// Get all shipments (admin)
 app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
     try {
-        const shipments = await Shipment.find()
-            .populate('senderId')
-            .populate('recipientId')
-            .populate('createdBy', 'name username')
-            .sort({ createdAt: -1 });
-            
+        const shipments = await Shipment.find().sort({ createdAt: -1 });
         console.log(`📋 Found ${shipments.length} shipments`);
-        
-        // Transform data for frontend
-        const transformedShipments = shipments.map(s => ({
-            ...s.toObject(),
-            senderName: s.senderId?.name || 'N/A',
-            senderEmail: s.senderId?.email || 'N/A',
-            senderPhone: s.senderId?.phone || 'N/A',
-            senderAddress: s.senderId?.address || 'N/A',
-            recipientName: s.recipientId?.name || 'N/A',
-            recipientEmail: s.recipientId?.email || 'N/A',
-            recipientPhone: s.recipientId?.phone || 'N/A',
-            deliveryAddress: s.recipientId?.address || 'N/A'
-        }));
-        
         res.json({
             success: true,
-            shipments: transformedShipments
+            shipments
         });
     } catch (error) {
         console.error('Error fetching shipments:', error);
@@ -682,37 +608,19 @@ app.get('/api/admin/shipments', authenticate, isAdmin, async (req, res) => {
     }
 });
 
-// Get single shipment by ID with populated data
+// Get single shipment by ID
 app.get('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) => {
     try {
-        const shipment = await Shipment.findById(req.params.id)
-            .populate('senderId')
-            .populate('recipientId')
-            .populate('createdBy', 'name username');
-            
+        const shipment = await Shipment.findById(req.params.id);
         if (!shipment) {
             return res.status(404).json({ 
                 success: false,
                 message: 'Shipment not found' 
             });
         }
-        
-        // Transform data for frontend
-        const transformedShipment = {
-            ...shipment.toObject(),
-            senderName: shipment.senderId?.name || 'N/A',
-            senderEmail: shipment.senderId?.email || 'N/A',
-            senderPhone: shipment.senderId?.phone || 'N/A',
-            senderAddress: shipment.senderId?.address || 'N/A',
-            recipientName: shipment.recipientId?.name || 'N/A',
-            recipientEmail: shipment.recipientId?.email || 'N/A',
-            recipientPhone: shipment.recipientId?.phone || 'N/A',
-            deliveryAddress: shipment.recipientId?.address || 'N/A'
-        };
-        
         res.json({
             success: true,
-            shipment: transformedShipment
+            shipment
         });
     } catch (error) {
         console.error('Error fetching shipment:', error);
@@ -723,7 +631,7 @@ app.get('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) => {
     }
 });
 
-// Update shipment status
+// Update shipment status with remarks
 app.put('/api/admin/shipments/:id/status', authenticate, isAdmin, async (req, res) => {
     try {
         const { status, location, message, remark } = req.body;
@@ -813,10 +721,6 @@ app.delete('/api/admin/shipments/:id', authenticate, isAdmin, async (req, res) =
                 message: 'Shipment not found' 
             });
         }
-        
-        // Also delete related shipment details
-        await ShipmentDetail.deleteMany({ shipmentId: req.params.id });
-        
         res.json({ 
             success: true,
             message: 'Shipment deleted successfully' 
@@ -841,21 +745,10 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
         const pendingShipments = await Shipment.countDocuments({ status: 'pending' });
         const totalUsers = await User.countDocuments();
         const adminUsers = await User.countDocuments({ isAdmin: true });
-        const totalSenders = await Sender.countDocuments();
-        const totalRecipients = await Recipient.countDocuments();
         
         const recentShipments = await Shipment.find()
-            .populate('senderId')
-            .populate('recipientId')
             .sort({ createdAt: -1 })
             .limit(5);
-            
-        // Transform recent shipments
-        const transformedRecent = recentShipments.map(s => ({
-            ...s.toObject(),
-            senderName: s.senderId?.name || 'N/A',
-            recipientName: s.recipientId?.name || 'N/A'
-        }));
 
         res.json({
             success: true,
@@ -865,9 +758,7 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
             pendingShipments,
             totalUsers,
             adminUsers,
-            totalSenders,
-            totalRecipients,
-            recentShipments: transformedRecent
+            recentShipments
         });
     } catch (error) {
         console.error('Error fetching stats:', error);
@@ -878,57 +769,39 @@ app.get('/api/admin/stats', authenticate, isAdmin, async (req, res) => {
     }
 });
 
-// ============= STATIC ROUTES =============
-
-// Serve index.html at root
-app.get('/', (req, res) => {
-    const filePath = path.join(__dirname, 'index.html');
-    if (fs.existsSync(filePath)) {
-        res.sendFile(filePath);
-    } else {
-        res.status(404).send('index.html not found');
-    }
-});
-
-// Serve admin.html at /admin
-app.get('/admin', (req, res) => {
-    const filePath = path.join(__dirname, 'admin.html');
-    console.log('Looking for admin.html at:', filePath);
-    
-    if (fs.existsSync(filePath)) {
-        console.log('✅ admin.html found, serving...');
-        res.sendFile(filePath);
-    } else {
-        console.error('❌ admin.html NOT FOUND at:', filePath);
-        res.status(404).send(`
-            <h1>admin.html not found</h1>
-            <p>Looking for: ${filePath}</p>
-            <p>Current directory: ${__dirname}</p>
-            <p>Files in directory:</p>
-            <ul>
-                ${fs.readdirSync(__dirname).map(file => `<li>${file}</li>`).join('')}
-            </ul>
-        `);
-    }
-});
-
-// ============= DEBUG ROUTES =============
-
-app.get('/api/debug/collections', authenticate, isAdmin, async (req, res) => {
+// Debug route to check database
+app.get('/api/debug/check-db', authenticate, isAdmin, async (req, res) => {
     try {
-        const collections = await mongoose.connection.db.listCollections().toArray();
-        const stats = {
-            users: await User.countDocuments(),
-            senders: await Sender.countDocuments(),
-            recipients: await Recipient.countDocuments(),
-            shipments: await Shipment.countDocuments(),
-            shipmentDetails: await ShipmentDetail.countDocuments()
-        };
-        
+        const count = await Shipment.countDocuments();
+        const sample = await Shipment.findOne().sort({ createdAt: -1 });
         res.json({
             success: true,
-            collections: collections.map(c => c.name),
-            counts: stats
+            databaseConnected: mongoose.connection.readyState === 1,
+            totalShipments: count,
+            latestShipment: sample ? {
+                trackingNumber: sample.trackingNumber,
+                senderName: sample.senderName,
+                senderPhone: sample.senderPhone,
+                senderAddress: sample.senderAddress,
+                recipientName: sample.recipientName,
+                packageType: sample.packageType,
+                departureDate: sample.departureDate,
+                createdAt: sample.createdAt
+            } : null
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Debug route to list files
+app.get('/api/debug/files', (req, res) => {
+    try {
+        const files = fs.readdirSync(__dirname);
+        res.json({
+            success: true,
+            currentDirectory: __dirname,
+            files: files
         });
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -963,9 +836,10 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`📝 Register: http://localhost:${PORT}/api/register (POST)`);
     console.log(`🔧 Setup Admin: http://localhost:${PORT}/api/setup-admin`);
     console.log(`🔑 Login: http://localhost:${PORT}/api/login (POST)`);
+    console.log(`📦 Public Tracking: http://localhost:${PORT}`);
     console.log(`👤 Admin Panel: http://localhost:${PORT}/admin`);
-    console.log(`📦 New Collections: Senders, Recipients, ShipmentDetails`);
-    console.log(`🔍 Debug: http://localhost:${PORT}/api/debug/collections\n`);
+    console.log(`🔍 Debug DB: http://localhost:${PORT}/api/debug/check-db (need auth)`);
+    console.log(`📁 Debug Files: http://localhost:${PORT}/api/debug/files\n`);
 });
 
 process.on('SIGTERM', () => {
