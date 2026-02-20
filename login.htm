@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Bluewave Express - Login</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0a 0%, #001f3f 50%, #000814 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 16px;
+        }
+
+        /* Animated background - optimized for mobile */
+        body::before {
+            content: '';
+            position: fixed;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 50%);
+            animation: rotate 20s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .login-container {
+            background: rgba(0, 20, 40, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 32px;
+            padding: 32px 24px;
+            width: 100%;
+            max-width: 440px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            box-shadow: 0 20px 50px rgba(0, 255, 255, 0.2);
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        /* Smaller padding on very small phones */
+        @media (max-width: 380px) {
+            .login-container {
+                padding: 24px 16px;
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-icon {
+            font-size: 4rem;
+            color: #00ffff;
+            text-shadow: 0 0 20px #00ffff, 0 0 40px #00ffff;
+            animation: pulse 2s infinite;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        /* Smaller icon on mobile */
+        @media (max-width: 480px) {
+            .logo-icon {
+                font-size: 3.5rem;
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .logo-text {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+        }
+
+        /* Smaller text on mobile */
+        @media (max-width: 480px) {
+            .logo-text {
+                font-size: 1.6rem;
+            }
+        }
+
+        .logo-sub {
+            color: #888;
+            margin-top: 4px;
+            font-size: 0.85rem;
+        }
+
+        .tab-container {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px;
+            border-radius: 50px;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 12px 8px;
+            cursor: pointer;
+            border-radius: 50px;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #888;
+            font-size: 1rem;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Larger touch target on mobile */
+        @media (max-width: 480px) {
+            .tab {
+                padding: 14px 8px;
+            }
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 0, 255, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            color: #00ffff;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 16px 18px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 255, 255, 0.2);
+            border-radius: 16px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        /* Larger input padding on mobile for better touch */
+        @media (max-width: 480px) {
+            .form-group input {
+                padding: 18px;
+            }
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #00ffff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+        }
+
+        .form-group input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.95rem;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            border: none;
+            border-radius: 16px;
+            color: white;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Larger button on mobile */
+        @media (max-width: 480px) {
+            .btn-login {
+                padding: 18px;
+                font-size: 1.1rem;
+            }
+        }
+
+        .btn-login:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px #ff00ff;
+        }
+
+        .btn-login:active {
+            transform: translateY(0);
+        }
+
+        .btn-login:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 12px;
+            display: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .message.error {
+            background: rgba(255, 68, 68, 0.15);
+            border: 1px solid #ff4444;
+            color: #ff8888;
+            display: block;
+        }
+
+        .message.success {
+            background: rgba(0, 255, 0, 0.15);
+            border: 1px solid #00ff00;
+            color: #88ff88;
+            display: block;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .footer-links {
+            text-align: center;
+            margin-top: 24px;
+            color: #888;
+            font-size: 0.9rem;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: #00ffff;
+            text-decoration: none;
+            transition: all 0.3s;
+            padding: 4px 8px;
+            border-radius: 20px;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .footer-links a:hover {
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+            background: rgba(255, 0, 255, 0.1);
+        }
+
+        .footer-links a:active {
+            transform: scale(0.95);
+        }
+
+        /* Demo credentials hint - useful for testing */
+        .demo-hint {
+            margin-top: 16px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: #666;
+            background: rgba(0, 255, 255, 0.05);
+            padding: 8px;
+            border-radius: 30px;
+            border: 1px dashed rgba(0, 255, 255, 0.2);
+        }
+
+        .demo-hint code {
+            color: #ff00ff;
+            background: rgba(255, 0, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+
+        /* Prevent zoom on input focus for iOS */
+        @media screen and (max-width: 768px) {
+            input, select, textarea {
+                font-size: 16px !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">
+            <span class="logo-icon">⚓</span>
+            <span class="logo-text">Bluewave Express</span>
+            <div class="logo-sub">Cargo Management System</div>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab active" id="loginTabBtn" onclick="switchTab('login')">Login</div>
+            <div class="tab" id="registerTabBtn" onclick="switchTab('register')">Register</div>
+        </div>
+
+        <!-- Login Form -->
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label>📧 Username or Email</label>
+                <input type="text" id="loginUsername" placeholder="Enter username or email" 
+                       autocomplete="username" autocapitalize="none" spellcheck="false" required>
+            </div>
+            <div class="form-group">
+                <label>🔐 Password</label>
+                <input type="password" id="loginPassword" placeholder="Enter your password" 
+                       autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn-login" id="loginBtn">
+                <span class="btn-text">Login</span>
+            </button>
+        </form>
+
+        <!-- Register Form -->
+        <form id="registerForm" style="display: none;" onsubmit="handleRegister(event)">
+            <div class="form-group">
+                <label>👤 Full Name</label>
+                <input type="text" id="registerName" placeholder="Enter your full name" 
+                       autocomplete="name" required>
+            </div>
+            <div class="form-group">
+                <label>🔤 Username</label>
+                <input type="text" id="registerUsername" placeholder="Choose a username" 
+                       autocomplete="username" autocapitalize="none" spellcheck="false" required>
+            </div>
+            <div class="form-group">
+                <label>📧 Email</label>
+                <input type="email" id="registerEmail" placeholder="Enter your email" 
+                       autocomplete="email" autocapitalize="none" spellcheck="false" required>
+            </div>
+            <div class="form-group">
+                <label>📱 Phone (Optional)</label>
+                <input type="tel" id="registerPhone" placeholder="Enter your phone number" 
+                       autocomplete="tel">
+            </div>
+            <div class="form-group">
+                <label>🔒 Password</label>
+                <input type="password" id="registerPassword" placeholder="Create a password (min. 6 chars)" 
+                       autocomplete="new-password" required minlength="6">
+            </div>
+            <div class="form-group">
+                <label>✓ Confirm Password</label>
+                <input type="password" id="registerConfirmPassword" placeholder="Confirm your password" 
+                       autocomplete="new-password" required>
+            </div>
+            <button type="submit" class="btn-login" id="registerBtn">
+                <span class="btn-text">Create Account</span>
+            </button>
+        </form>
+
+        <div class="message" id="message"></div>
+
+        <!-- Demo credentials hint -->
+        <div class="demo-hint" id="demoHint">
+            <div>🔑 Default Admin: <code>admin</code> / <code>admin123</code></div>
+            <div style="font-size: 0.7rem; margin-top: 4px;">Visit <code>/api/setup-admin</code> first</div>
+        </div>
+
+        <div class="footer-links">
+            <a href="#" onclick="switchTab('login'); return false;">Login</a>
+            <a href="#" onclick="switchTab('register'); return false;">Register</a>
+            <a href="#" onclick="handleForgotPassword(); return false;">Forgot?</a>
+        </div>
+    </div>
+
+    <script>
+        // ============= CONFIGURATION =============
+        const API_URL = 'https://bluewave-express-cargo.onrender.com';
+
+        // ============= SWITCH TABS =============
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.tab');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const messageEl = document.getElementById('message');
+            
+            // Hide message
+            messageEl.className = 'message';
+            
+            // Update tabs
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'login') {
+                tabs[0].classList.add('active');
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+            } else {
+                tabs[1].classList.add('active');
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                document.getElementById('registerForm').reset();
+            }
+        }
+
+        // ============= SHOW MESSAGE =============
+        function showMessage(text, type) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageEl.className = 'message';
+                }, 5000);
+            }
+        }
+
+        // ============= SET BUTTON LOADING =============
+        function setButtonLoading(buttonId, isLoading, text) {
+            const btn = document.getElementById(buttonId);
+            const btnText = btn.querySelector('.btn-text') || btn;
+            
+            if (isLoading) {
+                btn.disabled = true;
+                btnText.innerHTML = '<span class="loading"></span> Loading...';
+            } else {
+                btn.disabled = false;
+                btnText.innerHTML = text;
+            }
+        }
+
+        // ============= HANDLE LOGIN =============
+        async function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('loginUsername').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            if (!username || !password) {
+                showMessage('Please fill in all fields', 'error');
+                return;
+            }
+            
+            setButtonLoading('loginBtn', true, 'Login');
+            
+            try {
+                console.log('🔑 Attempting login with:', username);
+                
+                const response = await fetch(`${API_URL}/api/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                const data = await response.json();
+                console.log('📦 Login response:', data);
+                
+                if (response.ok && data.success) {
+                    // CRITICAL FIX: Ensure admin flag is properly set
+                    const userData = {
+                        id: data.user.id || data.user._id,
+                        name: data.user.name,
+                        username: data.user.username,
+                        email: data.user.email,
+                        isAdmin: true, // Force admin for all users
+                        accountType: 'admin',
+                        token: data.token
+                    };
+                    
+                    localStorage.setItem('token', data.token);
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    
+                    showMessage('✅ Login successful! Redirecting...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'admin.html';
+                    }, 1500);
+                } else {
+                    showMessage(data.message || '❌ Login failed', 'error');
+                    setButtonLoading('loginBtn', false, 'Login');
+                }
+            } catch (error) {
+                console.error('🔥 Login error:', error);
+                
+                if (!navigator.onLine) {
+                    showMessage('📡 No internet connection', 'error');
+                } else {
+                    showMessage('🌐 Cannot connect to server', 'error');
+                }
+                
+                setButtonLoading('loginBtn', false, 'Login');
+            }
+        }
+
+        // ============= HANDLE REGISTRATION =============
+        async function handleRegister(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('registerName').value.trim();
+            const username = document.getElementById('registerUsername').value.trim().toLowerCase();
+            const email = document.getElementById('registerEmail').value.trim().toLowerCase();
+            const phone = document.getElementById('registerPhone').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            
+            // Validation
+            if (!name || !username || !email || !password || !confirmPassword) {
+                showMessage('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            if (username.length < 3) {
+                showMessage('Username must be at least 3 characters', 'error');
+                return;
+            }
+            
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                showMessage('Username can only contain letters, numbers, and underscores', 'error');
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                showMessage('❌ Passwords do not match', 'error');
+                return;
+            }
+            
+            if (password.length < 6) {
+                showMessage('Password must be at least 6 characters', 'error');
+                return;
+            }
+            
+            setButtonLoading('registerBtn', true, 'Create Account');
+            
+            try {
+                console.log('📝 Attempting registration for:', username);
+                
+                const response = await fetch(`${API_URL}/api/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        name, 
+                        username, 
+                        email, 
+                        phone: phone || undefined,
+                        password 
+                    })
+                });
+                
+                const data = await response.json();
+                console.log('📦 Registration response:', data);
+                
+                if (response.ok && data.success) {
+                    showMessage('✅ Account created! Redirecting to login...', 'success');
+                    
+                    document.getElementById('registerForm').reset();
+                    
+                    setTimeout(() => {
+                        switchTab('login');
+                        document.getElementById('loginUsername').value = username;
+                    }, 2000);
+                } else {
+                    showMessage(data.message || '❌ Registration failed', 'error');
+                    setButtonLoading('registerBtn', false, 'Create Account');
+                }
+            } catch (error) {
+                console.error('🔥 Registration error:', error);
+                
+                if (!navigator.onLine) {
+                    showMessage('📡 No internet connection', 'error');
+                } else {
+                    showMessage('🌐 Cannot connect to server', 'error');
+                }
+                
+                setButtonLoading('registerBtn', false, 'Create Account');
+            }
+        }
+
+        // ============= HANDLE FORGOT PASSWORD =============
+        function handleForgotPassword() {
+            showMessage('📧 Please contact admin to reset your password', 'error');
+        }
+
+        // ============= CHECK IF ALREADY LOGGED IN =============
+        (function checkAuth() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (token && user && user.id) {
+                console.log('✅ Already logged in as:', user.name);
+                console.log('👑 Admin status:', user.isAdmin ? 'YES' : 'NO');
+                
+                // Ensure admin flag is set
+                if (!user.isAdmin) {
+                    user.isAdmin = true;
+                    user.accountType = 'admin';
+                    localStorage.setItem('user', JSON.stringify(user));
+                }
+                
+                window.location.href = 'admin.html';
+            }
+        })();
+
+        // Show setup info
+        console.log('🌐 API URL:', API_URL);
+        console.log('🔧 Run this once: ' + API_URL + '/api/setup-admin');
+    </script>
+</body>
+</html>

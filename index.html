@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Bluewave Express Cargo - Global Logistics & Shipping</title>
     <style>
         * {
@@ -115,7 +115,27 @@
             text-shadow: 0 0 10px #00ffff;
         }
 
-        /* Hero Section with Local Image */
+        .admin-login-btn {
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            color: white !important;
+            padding: 0.6rem 1.5rem !important;
+            border-radius: 30px;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .admin-login-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px #ff00ff;
+        }
+
+        .admin-login-btn::after {
+            display: none !important;
+        }
+
+        /* Hero Section */
         .hero {
             position: relative;
             min-height: 100vh;
@@ -127,15 +147,13 @@
             overflow: hidden;
         }
 
-        .hero-image-bg {
+        .hero-video-bg {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: url('images/road-transport.jpg');
-            background-size: cover;
-            background-position: center;
+            object-fit: cover;
             z-index: -2;
         }
 
@@ -145,7 +163,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(0, 31, 63, 0.9), rgba(0, 8, 20, 0.95));
+            background: linear-gradient(135deg, rgba(0, 31, 63, 0.85), rgba(0, 8, 20, 0.95));
             z-index: -1;
         }
 
@@ -175,6 +193,12 @@
             background-size: 200% auto;
         }
 
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+        }
+
         @keyframes glow {
             from { text-shadow: 0 0 30px #00ffff; }
             to { text-shadow: 0 0 60px #ff00ff; }
@@ -185,6 +209,12 @@
             color: #ffffff;
             margin-bottom: 2rem;
             text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        @media (max-width: 768px) {
+            .hero-subtitle {
+                font-size: 1.3rem;
+            }
         }
 
         .hero-stats {
@@ -214,6 +244,12 @@
             font-weight: bold;
             color: #00ffff;
             text-shadow: 0 0 30px #00ffff;
+        }
+
+        @media (max-width: 768px) {
+            .stat-number {
+                font-size: 2.5rem;
+            }
         }
 
         .stat-label {
@@ -292,6 +328,12 @@
             z-index: 1;
         }
 
+        @media (max-width: 768px) {
+            .section-title {
+                font-size: 2.5rem;
+            }
+        }
+
         .tracking-form {
             max-width: 800px;
             margin: 0 auto 3rem;
@@ -305,7 +347,7 @@
 
         .tracking-input {
             flex: 1;
-            min-width: 350px;
+            min-width: 300px;
             padding: 1.5rem 2rem;
             background: rgba(255, 255, 255, 0.05);
             border: 2px solid #00ffff33;
@@ -367,7 +409,7 @@
 
         .services-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
             gap: 2.5rem;
             max-width: 1400px;
             margin: 0 auto;
@@ -529,6 +571,12 @@
             align-items: center;
         }
 
+        @media (max-width: 992px) {
+            .customs-content {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .customs-text {
             animation: slideInLeft 1s ease;
         }
@@ -684,6 +732,18 @@
             margin-bottom: 2rem;
         }
 
+        @media (max-width: 992px) {
+            .tracking-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .tracking-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         .info-card {
             background: rgba(0, 255, 255, 0.05);
             border-radius: 20px;
@@ -704,7 +764,7 @@
         }
 
         .info-label {
-            width: 140px;
+            width: 120px;
             color: #888888;
         }
 
@@ -914,21 +974,39 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .hero h1 { font-size: 4rem; }
-            .customs-content { grid-template-columns: 1fr; }
-        }
-
+        /* Responsive adjustments */
         @media (max-width: 768px) {
-            .navbar { flex-direction: column; padding: 1rem; }
-            .nav-links { flex-wrap: wrap; justify-content: center; gap: 1.5rem; }
-            .hero h1 { font-size: 2.5rem; }
-            .hero-subtitle { font-size: 1.2rem; }
-            .stat-number { font-size: 2.5rem; }
-            .tracking-grid { grid-template-columns: 1fr; }
-            .services-grid { grid-template-columns: 1fr; }
-            .section-title { font-size: 2.5rem; }
+            .navbar {
+                flex-direction: column;
+                padding: 1rem;
+            }
+            
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+                margin-top: 0.5rem;
+            }
+            
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-subtitle {
+                font-size: 1.2rem;
+            }
+            
+            .stat-number {
+                font-size: 2.5rem;
+            }
+            
+            .tracking-form {
+                flex-direction: column;
+            }
+            
+            .tracking-input {
+                min-width: auto;
+            }
         }
     </style>
 </head>
@@ -946,12 +1024,16 @@
             <a href="#features">Features</a>
             <a href="#customs">Customs</a>
             <a href="#contact">Contact</a>
+            <a href="login.html" class="admin-login-btn">Admin Login</a>
         </div>
     </nav>
 
-    <!-- Hero Section with Local Image -->
+    <!-- Hero Section -->
     <section id="home" class="hero">
-        <div class="hero-image-bg"></div>
+        <video class="hero-video-bg" autoplay muted loop playsinline>
+            <source src="https://player.vimeo.com/external/370331493.sd.mp4?s=90c43c8e3b8a0b8a8b8a8b8a8b8a8b8a8b8a8b8a&profile_id=139&oauth2_token_id=57447761" type="video/mp4">
+            <!-- Fallback background if video doesn't load -->
+        </video>
         <div class="hero-overlay"></div>
         <div class="hero-content">
             <h1>Bluewave Express Cargo</h1>
@@ -999,7 +1081,7 @@
     <section id="tracking" class="tracking-section">
         <h2 class="section-title">Track Your Shipment</h2>
         <div class="tracking-form">
-            <input type="text" class="tracking-input" id="trackingNumber" placeholder="Enter 9-digit tracking number">
+            <input type="text" class="tracking-input" id="trackingNumber" placeholder="Enter 9-digit tracking number" maxlength="9" pattern="\d{9}">
             <button class="tracking-btn" onclick="trackShipment()">Track Package</button>
         </div>
 
@@ -1019,7 +1101,7 @@
             <!-- Road Transport -->
             <div class="service-card">
                 <div class="service-icon">🚛</div>
-                <img src="images/road-service.jpg" alt="Road Transport" class="service-image">
+                <div class="service-image" style="background: linear-gradient(135deg, #00ffff22, #ff00ff22); height: 200px; display: flex; align-items: center; justify-content: center; font-size: 5rem;">🚛</div>
                 <h3 class="service-title">Road Transport</h3>
                 <p class="service-description">Fast and reliable road freight services across the UK and Europe. Real-time tracking and dedicated delivery.</p>
                 <ul class="service-features">
@@ -1033,7 +1115,7 @@
             <!-- Diplomatic Bag & Secure Logistics -->
             <div class="service-card">
                 <div class="service-icon">💼</div>
-                <img src="images/diplomatic-bag.jpg" alt="Secure Logistics" class="service-image">
+                <div class="service-image" style="background: linear-gradient(135deg, #00ffff22, #ff00ff22); height: 200px; display: flex; align-items: center; justify-content: center; font-size: 5rem;">💼</div>
                 <h3 class="service-title">Diplomatic Bag & Secure Logistics</h3>
                 <p class="service-description">Secure handling of sensitive documents and valuable items with end-to-end encryption and tracking.</p>
                 <ul class="service-features">
@@ -1047,7 +1129,7 @@
             <!-- Warehousing -->
             <div class="service-card">
                 <div class="service-icon">🏢</div>
-                <img src="images/warehouse.jpg" alt="Warehousing" class="service-image">
+                <div class="service-image" style="background: linear-gradient(135deg, #00ffff22, #ff00ff22); height: 200px; display: flex; align-items: center; justify-content: center; font-size: 5rem;">🏢</div>
                 <h3 class="service-title">Secure Warehousing</h3>
                 <p class="service-description">State-of-the-art warehousing facilities with 24/7 security, climate control, and inventory management.</p>
                 <ul class="service-features">
@@ -1061,7 +1143,7 @@
             <!-- Air Freight -->
             <div class="service-card">
                 <div class="service-icon">✈️</div>
-                <img src="images/air-freight.jpg" alt="Air Freight" class="service-image">
+                <div class="service-image" style="background: linear-gradient(135deg, #00ffff22, #ff00ff22); height: 200px; display: flex; align-items: center; justify-content: center; font-size: 5rem;">✈️</div>
                 <h3 class="service-title">Air Freight</h3>
                 <p class="service-description">Fast and efficient air freight services with global coverage and priority handling.</p>
                 <ul class="service-features">
@@ -1075,7 +1157,7 @@
             <!-- Sea/Ocean Freight -->
             <div class="service-card">
                 <div class="service-icon">🚢</div>
-                <img src="images/ocean-freight.jpg" alt="Ocean Freight" class="service-image">
+                <div class="service-image" style="background: linear-gradient(135deg, #00ffff22, #ff00ff22); height: 200px; display: flex; align-items: center; justify-content: center; font-size: 5rem;">🚢</div>
                 <h3 class="service-title">Sea / Ocean Freight</h3>
                 <p class="service-description">Cost-effective ocean freight solutions for bulk cargo and container shipments worldwide.</p>
                 <ul class="service-features">
@@ -1089,7 +1171,7 @@
             <!-- Mail Services -->
             <div class="service-card">
                 <div class="service-icon">📬</div>
-                <img src="images/mail-services.jpg" alt="Mail Services" class="service-image">
+                <div class="service-image" style="background: linear-gradient(135deg, #00ffff22, #ff00ff22); height: 200px; display: flex; align-items: center; justify-content: center; font-size: 5rem;">📬</div>
                 <h3 class="service-title">Secure Mail Services</h3>
                 <p class="service-description">Receive and forward your mail securely with our dedicated mail handling service.</p>
                 <ul class="service-features">
@@ -1156,7 +1238,7 @@
                     <li>Specialist Customs Advice</li>
                 </ul>
             </div>
-            <img src="images/customs.jpg" alt="Customs Clearance" class="customs-image">
+            <div class="customs-image" style="background: linear-gradient(135deg, #00ffff22, #ff00ff22); height: 400px; display: flex; align-items: center; justify-content: center; font-size: 8rem;">📋</div>
         </div>
     </section>
 
@@ -1180,7 +1262,7 @@
         </div>
     </div>
 
-    <!-- Footer (UPDATED - Added emails) -->
+    <!-- Footer -->
     <footer id="contact" class="footer">
         <div class="footer-content">
             <div class="footer-section">
@@ -1261,7 +1343,7 @@
 
         // ============= OBSERVER FOR STATS COUNTERS =============
         const observerOptions = {
-            threshold: 0.5,
+            threshold: 0.3,
             rootMargin: '0px'
         };
 
@@ -1343,7 +1425,7 @@
             }
         }
 
-        // ============= DISPLAY SHIPMENT DETAILS (UPDATED - Shows actual data, TBA for freight) =============
+        // ============= DISPLAY SHIPMENT DETAILS =============
         function displayShipmentDetails(shipment) {
             const resultDiv = document.getElementById('trackingResult');
             
@@ -1391,7 +1473,7 @@
             // Show TBA for freight cost if not set
             let freightDisplay = '<span class="freight-tba">TBA</span>';
             if (shipment.freightCost !== undefined && shipment.freightCost !== null && shipment.freightCost > 0) {
-                freightDisplay = `<span class="freight-cost">£${shipment.freightCost.toFixed(2)}</span>`;
+                freightDisplay = `<span class="freight-cost">£${parseFloat(shipment.freightCost).toFixed(2)}</span>`;
             } else if (shipment.freightCost === 0) {
                 freightDisplay = '<span class="freight-cost">£0.00</span>';
             }
@@ -1534,6 +1616,14 @@
                     target.scrollIntoView({ behavior: 'smooth' });
                 }
             });
+        });
+
+        // Auto-focus tracking input on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const trackingInput = document.getElementById('trackingNumber');
+            if (trackingInput) {
+                trackingInput.focus();
+            }
         });
     </script>
 </body>

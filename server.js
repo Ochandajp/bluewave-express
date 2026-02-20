@@ -16,13 +16,13 @@ app.use(cors({
     origin: '*',
     credentials: true
 }));
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json({ limit: '10mb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files from current directory
+// Serve static files
 app.use(express.static(path.join(__dirname)));
 
-// Log all requests for debugging
+// Log all requests
 app.use((req, res, next) => {
     console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
     next();
@@ -31,7 +31,10 @@ app.use((req, res, next) => {
 // ============= MongoDB Connection =============
 const MONGODB_URI = 'mongodb+srv://johnpaul:jp54321@cluster0.ugm91.mongodb.net/shipping_db?retryWrites=true&w=majority';
 
-mongoose.connect(MONGODB_URI)
+mongoose.connect(MONGODB_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
 .then(() => {
     console.log('✅ MongoDB connected successfully');
 })
@@ -55,7 +58,7 @@ const userSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive'], default: 'active' }
 });
 
-// Shipment Schema - ALREADY HAS ALL FIELDS INCLUDING SENDER INFO
+// Shipment Schema
 const shipmentSchema = new mongoose.Schema({
     trackingNumber: { type: String, unique: true, required: true },
     
@@ -315,7 +318,6 @@ app.get('/api/setup-admin', async (req, res) => {
 
 // ============= STATIC ROUTES =============
 
-// Serve index.html at root
 app.get('/', (req, res) => {
     const filePath = path.join(__dirname, 'index.html');
     if (fs.existsSync(filePath)) {
@@ -325,25 +327,21 @@ app.get('/', (req, res) => {
     }
 });
 
-// Serve admin.html at /admin
 app.get('/admin', (req, res) => {
     const filePath = path.join(__dirname, 'admin.html');
-    console.log('Looking for admin.html at:', filePath);
-    
     if (fs.existsSync(filePath)) {
-        console.log('✅ admin.html found, serving...');
         res.sendFile(filePath);
     } else {
-        console.error('❌ admin.html NOT FOUND at:', filePath);
-        res.status(404).send(`
-            <h1>admin.html not found</h1>
-            <p>Looking for: ${filePath}</p>
-            <p>Current directory: ${__dirname}</p>
-            <p>Files in directory:</p>
-            <ul>
-                ${fs.readdirSync(__dirname).map(file => `<li>${file}</li>`).join('')}
-            </ul>
-        `);
+        res.status(404).send('admin.html not found');
+    }
+});
+
+app.get('/login', (req, res) => {
+    const filePath = path.join(__dirname, 'login.html');
+    if (fs.existsSync(filePath)) {
+        res.sendFile(filePath);
+    } else {
+        res.status(404).send('login.html not found');
     }
 });
 
@@ -476,13 +474,41 @@ app.get('/api/shipments/track/:trackingNumber', async (req, res) => {
     }
 });
 
-// ============= FIXED: CREATE NEW SHIPMENT ROUTE =============
-// This now properly saves ALL fields including sender information
+// CREATE NEW SHIPMENT - FIXED VERSION
 app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
     try {
         console.log('📦 RECEIVED SHIPMENT DATA:', JSON.stringify(req.body, null, 2));
         
         const data = req.body;
+        
+        // Validate required fields
+        if (!data.senderName || !data.senderPhone || !data.senderAddress) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Sender name, phone and address are required' 
+            });
+        }
+        
+        if (!data.recipientName || !data.recipientPhone || !data.deliveryAddress) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Recipient name, phone and delivery address are required' 
+            });
+        }
+        
+        if (!data.origin || !data.destination) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Origin and destination are required' 
+            });
+        }
+        
+        if (!data.comment) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Initial remarks are required' 
+            });
+        }
         
         // Generate tracking number if not provided
         let trackingNumber = data.trackingNumber;
@@ -492,14 +518,22 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
                 trackingNumber = Math.floor(100000000 + Math.random() * 900000000).toString();
                 exists = await Shipment.findOne({ trackingNumber });
             } while (exists);
+        } else {
+            // Check if tracking number already exists
+            const existing = await Shipment.findOne({ trackingNumber });
+            if (existing) {
+                return res.status(400).json({ 
+                    success: false,
+                    message: 'Tracking number already exists' 
+                });
+            }
         }
 
         // Create shipment object with ALL fields explicitly mapped
-        // This ensures EVERY field from the frontend is saved
         const shipmentData = {
             trackingNumber: trackingNumber,
             
-            // SENDER INFORMATION - THESE WERE MISSING BEFORE
+            // SENDER INFORMATION
             senderName: data.senderName || '',
             senderEmail: data.senderEmail || '',
             senderPhone: data.senderPhone || '',
@@ -583,6 +617,15 @@ app.post('/api/shipments', authenticate, isAdmin, async (req, res) => {
 
     } catch (error) {
         console.error('❌ ERROR SAVING SHIPMENT:', error);
+        
+        // Handle duplicate key error
+        if (error.code === 11000) {
+            return res.status(400).json({ 
+                success: false,
+                message: 'Tracking number already exists. Please try again.' 
+            });
+        }
+        
         res.status(500).json({ 
             success: false,
             message: 'Error creating shipment: ' + error.message 

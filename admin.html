@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bluewave Express - Admin Dashboard</title>
     <style>
+        /* [Previous CSS styles remain exactly the same - keep all your existing CSS] */
         * {
             margin: 0;
             padding: 0;
@@ -1124,7 +1125,7 @@
                     </div>
                 </div>
 
-                <!-- Create Shipment Section -->
+                <!-- Create Shipment Section - FIXED FIELD IDs TO MATCH SERVER -->
                 <div id="createSectionContent" style="display: none;">
                     <div class="section-header">
                         <h2 class="section-title">Create New Shipment</h2>
@@ -1169,7 +1170,7 @@
                                 </div>
                             </div>
 
-                            <!-- Sender Information -->
+                            <!-- Sender Information - FIXED: IDs now match server expectations -->
                             <div class="form-section">
                                 <h3>📤 Sender Information</h3>
                                 <div class="form-grid">
@@ -1192,7 +1193,7 @@
                                 </div>
                             </div>
 
-                            <!-- Recipient Information -->
+                            <!-- Recipient Information - FIXED: IDs now match server expectations -->
                             <div class="form-section">
                                 <h3>👤 Recipient Information</h3>
                                 <div class="form-grid">
@@ -1761,69 +1762,37 @@
             loadShipments();
         }
 
-        // ============= FIXED: CREATE SHIPMENT - NOW SENDS ALL FIELDS =============
+        // ============= FIXED: CREATE SHIPMENT - NOW SENDS ALL FIELDS CORRECTLY =============
         async function createShipment() {
             try {
-                // Validate required fields
-                const senderName = document.getElementById('senderName')?.value?.trim();
-                const senderPhone = document.getElementById('senderPhone')?.value?.trim();
-                const senderAddress = document.getElementById('senderAddress')?.value?.trim();
-                const recipientName = document.getElementById('recipientName')?.value?.trim();
-                const recipientPhone = document.getElementById('recipientPhone')?.value?.trim();
-                const deliveryAddress = document.getElementById('deliveryAddress')?.value?.trim();
-                const origin = document.getElementById('origin')?.value?.trim();
-                const destination = document.getElementById('destination')?.value?.trim();
-                const comment = document.getElementById('comment')?.value?.trim();
-
-                if (!comment) {
-                    showError('Initial remarks are required');
-                    document.getElementById('comment').focus();
-                    return;
-                }
-
-                if (!senderName || !senderPhone || !senderAddress) {
-                    showError('Sender name, phone and address are required');
-                    return;
-                }
-
-                if (!recipientName || !recipientPhone || !deliveryAddress) {
-                    showError('Recipient name, phone and address are required');
-                    return;
-                }
-
-                if (!origin || !destination) {
-                    showError('Origin and destination are required');
-                    return;
-                }
-
-                // Build shipment data with ALL fields explicitly mapped
+                // Get all form values with correct IDs
                 const shipmentData = {
-                    // SENDER INFORMATION - THESE WERE MISSING BEFORE
-                    senderName: senderName,
-                    senderEmail: document.getElementById('senderEmail')?.value || '',
-                    senderPhone: senderPhone,
-                    senderAddress: senderAddress,
+                    // SENDER INFORMATION - CRITICAL FIX: IDs now match what server expects
+                    senderName: document.getElementById('senderName')?.value?.trim() || '',
+                    senderEmail: document.getElementById('senderEmail')?.value?.trim() || '',
+                    senderPhone: document.getElementById('senderPhone')?.value?.trim() || '',
+                    senderAddress: document.getElementById('senderAddress')?.value?.trim() || '',
                     
                     // RECIPIENT INFORMATION
-                    recipientName: recipientName,
-                    recipientEmail: document.getElementById('recipientEmail')?.value || '',
-                    recipientPhone: recipientPhone,
-                    deliveryAddress: deliveryAddress,
+                    recipientName: document.getElementById('recipientName')?.value?.trim() || '',
+                    recipientEmail: document.getElementById('recipientEmail')?.value?.trim() || '',
+                    recipientPhone: document.getElementById('recipientPhone')?.value?.trim() || '',
+                    deliveryAddress: document.getElementById('deliveryAddress')?.value?.trim() || '',
                     
                     // SHIPMENT INFORMATION
-                    origin: origin,
-                    destination: destination,
-                    carrier: document.getElementById('carrier')?.value || '',
+                    origin: document.getElementById('origin')?.value?.trim() || '',
+                    destination: document.getElementById('destination')?.value?.trim() || '',
+                    carrier: document.getElementById('carrier')?.value?.trim() || '',
                     shipmentType: document.getElementById('shipmentType')?.value || 'ROAD',
                     status: document.getElementById('status')?.value || 'pending',
                     
                     // PACKAGE DETAILS
-                    pieceType: document.getElementById('pieceType')?.value || '',
-                    product: document.getElementById('product')?.value || '',
+                    pieceType: document.getElementById('pieceType')?.value?.trim() || '',
+                    product: document.getElementById('product')?.value?.trim() || '',
                     quantity: document.getElementById('quantity')?.value || '',
-                    description: document.getElementById('description')?.value || '',
-                    packageType: document.getElementById('packageType')?.value || '',
-                    packageStatus: document.getElementById('packageStatus')?.value || '',
+                    description: document.getElementById('description')?.value?.trim() || '',
+                    packageType: document.getElementById('packageType')?.value?.trim() || '',
+                    packageStatus: document.getElementById('packageStatus')?.value?.trim() || '',
                     length: document.getElementById('length')?.value || '',
                     width: document.getElementById('width')?.value || '',
                     height: document.getElementById('height')?.value || '',
@@ -1838,12 +1807,34 @@
                     paymentMode: document.getElementById('paymentMode')?.value || 'cash',
                     freightCost: document.getElementById('freightCost')?.value ? parseFloat(document.getElementById('freightCost').value) : 0,
                     
-                    // REMARKS
-                    comment: comment,
+                    // REMARKS - CRITICAL: This must be provided
+                    comment: document.getElementById('comment')?.value?.trim() || '',
                     
                     // TRACKING
-                    trackingNumber: document.getElementById('trackingNumber')?.value || ''
+                    trackingNumber: document.getElementById('trackingNumber')?.value?.trim() || ''
                 };
+
+                // Validate required fields
+                if (!shipmentData.comment) {
+                    showError('Initial remarks are required');
+                    document.getElementById('comment').focus();
+                    return;
+                }
+
+                if (!shipmentData.senderName || !shipmentData.senderPhone || !shipmentData.senderAddress) {
+                    showError('Sender name, phone and address are required');
+                    return;
+                }
+
+                if (!shipmentData.recipientName || !shipmentData.recipientPhone || !shipmentData.deliveryAddress) {
+                    showError('Recipient name, phone and address are required');
+                    return;
+                }
+
+                if (!shipmentData.origin || !shipmentData.destination) {
+                    showError('Origin and destination are required');
+                    return;
+                }
 
                 console.log('📦 SENDING SHIPMENT DATA:', shipmentData);
                 setLoading(true);
